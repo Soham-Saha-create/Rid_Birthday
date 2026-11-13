@@ -212,7 +212,7 @@ a { color: var(--flame-soft); }
 .trail { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
 .trail path { fill: none; stroke-linecap: round; }
 .trail .seg-dim { stroke: var(--line); stroke-width: 3; stroke-dasharray: 1 9; }
-.trail .seg-lit { stroke: var(--flame); stroke-width: 2.5; filter: drop-shadow(0 0 6px rgba(255, 177, 59, 0.55)); }
+.trail .seg-lit { stroke: var(--flame); stroke-width: 2.5; filter: drop-shadow(0 0 5px rgba(236, 232, 247, 0.28)); }
 
 .star {
   position: absolute;
@@ -248,8 +248,8 @@ a { color: var(--flame-soft); }
 .star-hint { color: var(--haze); font-size: 0.85rem; line-height: 1.3; }
 .star.is-locked { color: var(--haze); cursor: default; }
 .star.is-locked .star-dot { opacity: 0.6; }
-.star.is-open .star-dot { box-shadow: inset 0 0 0 2px var(--flame-soft); }
-.star.is-done .star-dot { background: var(--flame); box-shadow: 0 0 22px rgba(255, 177, 59, 0.6); }
+.star.is-open .star-dot { background: color-mix(in srgb, var(--star, var(--flame)) 22%, var(--ink)); box-shadow: inset 0 0 0 2px var(--star, var(--flame-soft)); }
+.star.is-done .star-dot { background: var(--star, var(--flame)); box-shadow: 0 0 22px color-mix(in srgb, var(--star, var(--flame)) 60%, transparent); }
 .star.is-done .star-dot::before {
   content: "";
   width: 11px;
@@ -262,7 +262,7 @@ a { color: var(--flame-soft); }
   content: "";
   position: absolute;
   inset: -8px;
-  border: 2px solid var(--flame);
+  border: 2px solid var(--star, var(--flame));
   border-radius: 50%;
   animation: ring 2.4s ease-out infinite;
 }
