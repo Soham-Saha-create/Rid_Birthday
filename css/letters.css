@@ -1,0 +1,127 @@
+/* ==========================================================
+   Letters: a blush pink writing desk. Cream envelopes with wax
+   seals, and letters on ruled paper. Scoped to <body data-room="letters">.
+   ========================================================== */
+body[data-room="letters"] {
+  --ink: #fbe3e8;            /* page background */
+  --moon: #4a1d3a;           /* plum ink for text */
+  --haze: rgba(74, 29, 58, 0.62);
+  --flame: #d9607f;
+  --flame-soft: #b8395f;
+  --dusk: #fff6f1;
+  --dusk-2: #f6d3dc;
+  --line: rgba(74, 29, 58, 0.16);
+  --serif: "Playfair Display", Georgia, serif;
+  background: linear-gradient(180deg, #fdebee 0%, #f8d3dc 55%, #f3bfcc 100%);
+  background-attachment: fixed;
+  color: var(--moon);
+}
+body[data-room="letters"] #sky { display: none; }
+/* tiny dotted paper pattern */
+body[data-room="letters"]::before {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(rgba(217, 96, 127, 0.16) 1px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+body[data-room="letters"] .page { max-width: 720px; }
+body[data-room="letters"] .back { color: #7a2d55; font-family: "Courier Prime", monospace; font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; }
+body[data-room="letters"] .back:hover { color: #4a1d3a; }
+
+body[data-room="letters"] h1 {
+  text-align: center; font: italic 600 clamp(2.4rem, 9vw, 3.6rem)/1.1 "Playfair Display", serif; color: #6b1f4a; margin-bottom: 0.35em;
+}
+body[data-room="letters"] h1::after {
+  content: ""; display: block; width: 130px; height: 12px; margin: 10px auto 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='12' viewBox='0 0 130 12'%3E%3Cpath d='M2 6 Q 12 0 22 6 T 42 6 T 62 6 T 82 6 T 102 6 T 128 6' fill='none' stroke='%23d9607f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+body[data-room="letters"] .lede { text-align: center; margin-left: auto; margin-right: auto; max-width: 34ch; font: 400 1.25rem/1.4 "Caveat", cursive; color: #7a2d55; }
+body[data-room="letters"] .btn { background: #b8395f; color: #fff6f1; font-family: "Courier Prime", monospace; letter-spacing: 0.08em; }
+body[data-room="letters"] .btn:hover { background: #8f2a49; }
+body[data-room="letters"] :focus-visible { outline-color: #d9607f; }
+body[data-room="letters"] .devbar { background: rgba(74, 29, 58, 0.92); color: #fff6f1; }
+body[data-room="letters"] .devbar a { color: #ffc2d1; }
+
+/* ---------- Envelopes ---------- */
+body[data-room="letters"] .envelopes {
+  grid-template-columns: 1fr 1fr; gap: 26px 16px; margin: 36px 0 0;
+}
+body[data-room="letters"] .envelopes li:last-child:nth-child(odd) {
+  grid-column: 1 / -1; justify-self: center; width: calc(50% - 8px);
+}
+body[data-room="letters"] .envelope {
+  all: unset;
+  box-sizing: border-box; position: relative; display: block; width: 100%; aspect-ratio: 3 / 2;
+  overflow: hidden; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent;
+  background: #fff6f1; border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 14px 24px -14px rgba(120, 40, 70, 0.6), 0 0 0 1px rgba(74, 29, 58, 0.1);
+  transform: rotate(var(--tilt, 0deg)); transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+body[data-room="letters"] .envelopes li:nth-child(odd)  .envelope { --tilt: -1.6deg; }
+body[data-room="letters"] .envelopes li:nth-child(even) .envelope { --tilt: 1.3deg; }
+body[data-room="letters"] .envelopes li:nth-child(3n)   .envelope { --tilt: 0.5deg; }
+body[data-room="letters"] .envelope:hover { transform: translateY(-5px) rotate(0deg); box-shadow: inset 0 1px 0 #fff, 0 22px 30px -14px rgba(120, 40, 70, 0.6), 0 0 0 1px rgba(74, 29, 58, 0.1); }
+body[data-room="letters"] .envelope:focus-visible { outline: 3px solid #d9607f; outline-offset: 3px; }
+
+/* the flap */
+body[data-room="letters"] .envelope::before {
+  content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 58%;
+  border-radius: 0; box-shadow: none;
+  background: linear-gradient(180deg, #fbe0e4, #f2c7d1);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+/* the wax seal */
+body[data-room="letters"] .envelope::after {
+  content: "\2665"; position: absolute; left: 50%; top: 58%; width: 36px; height: 36px; margin: -18px 0 0 -18px;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ee7b97, #c43d65 70%);
+  box-shadow: 0 4px 8px rgba(120, 20, 50, 0.4), inset 0 0 0 3px rgba(255, 255, 255, 0.14);
+  color: #ffd9e1; font: 15px/1 Georgia, serif;
+}
+body[data-room="letters"] .env-name {
+  position: absolute; left: 6px; right: 6px; bottom: 10px;
+  font: 700 1.5rem/1 "Caveat", cursive; color: #4a1d3a;
+}
+body[data-room="letters"] .env-state {
+  position: absolute; top: 9px; right: 9px; z-index: 2; transform: rotate(8deg);
+  padding: 2px 6px; border: 1.5px solid currentColor; border-radius: 3px;
+  color: #b8395f; font: 400 0.6rem/1.2 "Courier Prime", monospace; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.85;
+}
+/* once read: seal is broken and the envelope looks used */
+body[data-room="letters"] .envelope.is-read { color: inherit; background: #f8e9e4; }
+body[data-room="letters"] .envelope.is-read::before { background: linear-gradient(180deg, #f6dbe0, #ecc0cb); box-shadow: none; }
+body[data-room="letters"] .envelope.is-read::after {
+  background: rgba(255, 255, 255, 0.45); box-shadow: inset 0 0 0 2px rgba(196, 61, 101, 0.4); color: rgba(196, 61, 101, 0.55);
+}
+body[data-room="letters"] .envelope.is-read .env-state { color: #7a2d55; }
+
+/* ---------- The letter itself ---------- */
+body[data-room="letters"] dialog.letter {
+  width: min(520px, calc(100vw - 28px)); max-height: calc(100dvh - 40px); padding: 0; border: 0; border-radius: 4px 4px 12px 12px;
+  background: #fffaf5; color: #4a1d3a;
+  box-shadow: 0 30px 80px rgba(74, 29, 58, 0.5), 0 0 0 1px rgba(74, 29, 58, 0.08);
+}
+body[data-room="letters"] dialog.letter::backdrop { background: rgba(74, 29, 58, 0.55); backdrop-filter: blur(3px); }
+body[data-room="letters"] .letter-inner {
+  max-height: calc(100dvh - 40px); overflow: auto; padding: 34px 24px 28px 56px;
+  background-color: #fffaf5;
+  background-image:
+    linear-gradient(to right, transparent 40px, rgba(217, 96, 127, 0.5) 40px, rgba(217, 96, 127, 0.5) 41.5px, transparent 41.5px),
+    repeating-linear-gradient(to bottom, transparent 0, transparent 33px, rgba(217, 96, 127, 0.22) 33px, rgba(217, 96, 127, 0.22) 34px);
+  background-attachment: local;
+}
+body[data-room="letters"] .letter-inner h2 { font: 700 2.4rem/68px "Caveat", cursive; color: #6b1f4a; margin: 0; }
+body[data-room="letters"] .letter-meaning { margin: 0; font: italic 300 0.98rem/34px "Kalam", cursive; color: #b8395f; }
+body[data-room="letters"] .letter-body { margin: 0 0 34px; font: 300 1.1rem/34px "Kalam", cursive; color: #4a1d3a; max-width: none; }
+body[data-room="letters"] .letter-close {
+  margin-top: 0; min-height: 40px; padding: 0 18px; background: transparent; color: #6b1f4a;
+  box-shadow: inset 0 0 0 1.5px rgba(107, 31, 74, 0.5); font: 400 0.72rem/1 "Courier Prime", monospace; letter-spacing: 0.18em; text-transform: uppercase;
+}
+body[data-room="letters"] .letter-close:hover { background: rgba(217, 96, 127, 0.14); }
+
+@media (min-width: 640px) {
+  body[data-room="letters"] .envelopes { grid-template-columns: repeat(3, 1fr); }
+  body[data-room="letters"] .envelopes li:last-child:nth-child(odd) { grid-column: auto; justify-self: stretch; width: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-room="letters"] .envelope { transition: none; }
+}
