@@ -35,14 +35,16 @@ window.CONTENT = {
     intro: "Each star opens after the one before it. You can come back to any of them whenever you like.",
     lockedHint: "Opens after the star before it",
     dateHint: "Opens on your birthday",
+    // color = the star's colour on the map. It is also the main colour of that room's page,
+    // so each star tells her what is coming. Change them here.
     rooms: {
-      music:   { name: "Music room" },
-      quest:   { name: "The quest" },
-      letters: { name: "Letters" },
-      gallery: { name: "Gallery" },
-      words:   { name: "Words" },
-      final:   { name: "The last star" },
-      secret:  { name: "Something hidden" }
+      music:   { name: "Music room",    color: "#e0a23a" },
+      quest:   { name: "The quest",     color: "#4d7cff" },
+      letters: { name: "Letters",       color: "#f4a6b8" },
+      gallery: { name: "Gallery",       color: "#aab0bd" },
+      words:   { name: "Words",         color: "#f5f2ea" },
+      final:   { name: "The last star", color: "#ff9a5a" },
+      secret:  { name: "Something hidden", color: "#e9829f" }
     }
   },
 

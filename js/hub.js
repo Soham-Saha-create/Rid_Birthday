@@ -19,6 +19,9 @@
   function finalLocked() {
     return !!(F.unlockAt && Date.now() < Date.parse(F.unlockAt) && !S.isDev());
   }
+  function colorOf(id) {
+    return (H.rooms[id] && H.rooms[id].color) || '#ffb13b';
+  }
   function unlocked(id) {
     if (id === 'final' && finalLocked()) return false;
     return S.isUnlocked(id);
@@ -44,13 +47,30 @@
     var next = null;
     S.order.forEach(function (id) { if (next === null && unlocked(id) && !S.isDone(id)) next = id; });
 
-    // lines between stars: lit once the star behind them is done
+    // lines between stars: lit once the star behind them is done.
+    // The line fades from that room's colour into the colour of the room it leads to.
+    var defs = document.createElementNS(SVGNS, 'defs');
+    trail.appendChild(defs);
     pts.forEach(function (p, i) {
       if (i === pts.length - 1) return;
-      var q = pts[i + 1], my = (p.y + q.y) / 2;
+      var q = pts[i + 1], my = (p.y + q.y) / 2, lit = S.isDone(p.id);
       var path = document.createElementNS(SVGNS, 'path');
       path.setAttribute('d', 'M' + p.x + ' ' + p.y + ' C ' + p.x + ' ' + my + ', ' + q.x + ' ' + my + ', ' + q.x + ' ' + q.y);
-      path.setAttribute('class', S.isDone(p.id) ? 'seg-lit' : 'seg-dim');
+      path.setAttribute('class', lit ? 'seg-lit' : 'seg-dim');
+      if (lit) {
+        var g = document.createElementNS(SVGNS, 'linearGradient');
+        g.setAttribute('id', 'seg' + i);
+        g.setAttribute('gradientUnits', 'userSpaceOnUse');
+        g.setAttribute('x1', p.x); g.setAttribute('y1', p.y);
+        g.setAttribute('x2', q.x); g.setAttribute('y2', q.y);
+        [[0, colorOf(p.id)], [1, colorOf(q.id)]].forEach(function (st) {
+          var stop = document.createElementNS(SVGNS, 'stop');
+          stop.setAttribute('offset', st[0]); stop.setAttribute('stop-color', st[1]);
+          g.appendChild(stop);
+        });
+        defs.appendChild(g);
+        path.style.stroke = 'url(#seg' + i + ')';
+      }
       trail.appendChild(path);
     });
 
@@ -68,6 +88,7 @@
       var el = open
         ? S.h('a', { class: cls, href: p.id + '.html' }, kids)
         : S.h('div', { class: cls, 'aria-disabled': 'true' }, kids);
+      el.style.setProperty('--star', colorOf(p.id));
       el.style.left = p.x + 'px';
       el.style.top = p.y + 'px';
       map.appendChild(el);
