@@ -1,184 +1,170 @@
 /* ==========================================================
-   Music room: its own look. A warm teal listening room with a
-   coral glow, instead of the night sky. Everything here is scoped
-   to <body data-room="music">, so no other page is touched.
+   Music room: the cream, maroon and mustard mixtape.
+   Scoped to <body data-room="music">, so no other page changes.
    ========================================================== */
 body[data-room="music"] {
-  --ink: #0d2b2e;
-  --dusk: #143a3e;
-  --dusk-2: #1c4a4f;
-  --moon: #fdf0dc;
-  --haze: #9cc4bd;
-  --flame: #ff7a59;
-  --flame-soft: #ffb08f;
-  --line: rgba(253, 240, 220, 0.16);
-  --serif: "DM Serif Display", Georgia, "Times New Roman", serif;
-  --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-  background:
-    radial-gradient(120% 60% at 50% -8%, #1f5a5c 0%, transparent 62%),
-    radial-gradient(80% 50% at 100% 100%, rgba(255, 122, 89, 0.16), transparent 62%),
-    var(--ink);
-  background-attachment: fixed;
+  --maroon: #5c1a1a;
+  --maroon-deep: #3d0f0f;
+  --cream: #f2e8d5;
+  --paper: #ece0c8;
+  --mustard: #c68a2e;
+  --ink: #2b1a12;
+  --moon: #2b1a12;
+  --haze: rgba(43, 26, 18, 0.62);
+  --flame: #c68a2e;
+  --flame-soft: #8a5c14;
+  --dusk-2: #5c1a1a;
+  --line: rgba(43, 26, 18, 0.18);
+  --serif: "Fraunces", Georgia, serif;
+  background-color: var(--cream);
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(198, 138, 46, 0.06), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(92, 26, 26, 0.05), transparent 45%);
+  color: var(--ink);
+  font-family: "Cormorant Garamond", Georgia, serif;
 }
 body[data-room="music"] #sky { display: none; }
-/* a little paper grain so the flat colour feels warm */
-body[data-room="music"]::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.07;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+body[data-room="music"] .noise {
+  position: fixed; inset: 0; pointer-events: none; opacity: 0.035; z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-body[data-room="music"] h1 { text-align: center; margin-bottom: 0.3em; }
-body[data-room="music"] .lede { text-align: center; margin-left: auto; margin-right: auto; }
+body[data-room="music"] .page { max-width: none; padding: 0; }
+body[data-room="music"] .back {
+  position: absolute; top: max(14px, env(safe-area-inset-top)); left: 18px; z-index: 5;
+  margin: 0; color: var(--maroon); font: 400 0.72rem/1 "Courier Prime", monospace;
+  letter-spacing: 0.18em; text-transform: uppercase;
+}
+body[data-room="music"] .back:hover { color: var(--maroon-deep); }
+body[data-room="music"] .end { margin: 0; padding: 0 6vw 8vh; text-align: center; position: relative; z-index: 2; }
+body[data-room="music"] .btn { background: var(--maroon); color: var(--cream); font-family: "Courier Prime", monospace; letter-spacing: 0.08em; }
+body[data-room="music"] .btn:hover { background: var(--maroon-deep); }
+body[data-room="music"] :focus-visible { outline-color: var(--mustard); }
+body[data-room="music"] .devbar { color: #f2e8d5; }
+body[data-room="music"] .devbar a { color: #ffd58a; }
+body[data-room="music"] .toast { background: var(--maroon-deep); color: var(--cream); }
 
-/* ---------- The deck ---------- */
-.deck {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin: 4px 0 30px;
+/* ---------- Stage ---------- */
+.room-music .stage {
+  min-height: 100vh; min-height: 100svh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 9vh 6vw 5vh; position: relative; z-index: 2; text-align: center;
 }
-.plate {
-  position: relative;
-  width: min(72vw, 280px);
-  aspect-ratio: 1;
-  margin: 10px auto 22px;
+.room-music .eyebrow {
+  font: 400 0.7rem/1.4 "Courier Prime", monospace; letter-spacing: 0.35em; text-transform: uppercase;
+  color: var(--maroon); opacity: 0.75; margin-bottom: 1.6rem;
 }
-.record {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: repeating-radial-gradient(circle at center, #09191b 0 2px, #10292c 3px 4px);
-  box-shadow: 0 26px 50px -18px rgba(0, 0, 0, 0.65), 0 0 0 7px rgba(253, 240, 220, 0.06);
-  animation: music-spin 5s linear infinite;
-  animation-play-state: paused;
+.room-music .title {
+  font-family: "Fraunces", serif; font-weight: 300; font-size: clamp(2.4rem, 7vw, 4.6rem);
+  line-height: 1.05; color: var(--maroon-deep); max-width: 16ch; margin: 0;
 }
-.record::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0 20%, rgba(255, 255, 255, 0.11) 25%, transparent 31% 70%, rgba(255, 255, 255, 0.08) 75%, transparent 81%);
+.room-music .title em { font-style: italic; font-weight: 600; color: var(--mustard); }
+.room-music .subtitle {
+  font-size: 1.15rem; color: var(--ink); opacity: 0.7; margin: 1.4rem 0 0; max-width: 38ch; line-height: 1.5;
 }
-.deck.is-playing .record { animation-play-state: running; }
-@keyframes music-spin { to { transform: rotate(360deg); } }
 
-.record-label {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 36%;
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: var(--flame);
-  color: #3a1208;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  box-shadow: inset 0 0 0 3px rgba(58, 18, 8, 0.14), 0 0 24px rgba(255, 122, 89, 0.35);
+.record-wrap {
+  margin-top: 5vh; position: relative; width: min(62vw, 320px); aspect-ratio: 1; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.rl-num { font: 400 1.75rem/1 var(--serif); }
-.rl-text { margin-top: 4px; font: 500 0.55rem/1.2 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; }
+.sleeve-hint {
+  position: absolute; bottom: -2.6rem; left: 50%; transform: translateX(-50%);
+  font: 400 0.68rem/1 "Courier Prime", monospace; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--maroon); white-space: nowrap; animation: music-pulse 2.4s ease-in-out infinite;
+}
+@keyframes music-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.85; } }
 
-.arm {
-  position: absolute;
-  right: -5%;
-  top: 4%;
-  width: 54%;
-  height: 6px;
-  border-radius: 3px;
-  background: linear-gradient(90deg, #cdbfa6, #fdf0dc);
-  transform-origin: 100% 50%;
-  transform: rotate(10deg);
-  transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+.vinyl {
+  width: 100%; height: 100%; border-radius: 50%;
+  background: repeating-radial-gradient(circle at center, #1a1210 0px, #1a1210 2px, #241a16 3px, #241a16 4px);
+  box-shadow: 0 25px 60px -15px rgba(61, 15, 15, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  position: relative; display: flex; align-items: center; justify-content: center;
+  animation: music-spin 8s linear infinite; animation-play-state: paused;
 }
-.arm::before {            /* the needle head */
-  content: "";
-  position: absolute;
-  left: -4px;
-  top: -4px;
-  width: 16px;
-  height: 14px;
-  border-radius: 4px;
-  background: var(--moon);
-}
-.arm::after {             /* the pivot */
-  content: "";
-  position: absolute;
-  right: -9px;
-  top: -9px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--dusk-2);
-  box-shadow: inset 0 0 0 3px var(--moon);
-}
-.deck.is-playing .arm { transform: rotate(-13deg); }
+.vinyl.spinning { animation-play-state: running; }
+@keyframes music-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-.now {
-  min-height: 1.4em;
-  margin: 0 0 4px;
-  color: var(--flame-soft);
-  font: 500 0.8rem/1.4 var(--mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.label {
+  width: 36%; height: 36%; border-radius: 50%; background: var(--mustard);
+  display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center;
+  box-shadow: inset 0 0 0 1px rgba(43, 26, 18, 0.15), 0 2px 8px rgba(0, 0, 0, 0.3);
 }
-.count { margin: 0; color: var(--haze); font: 400 0.75rem/1.4 var(--mono); letter-spacing: 0.06em; }
-.deck .blend-note { max-width: 34ch; margin: 14px auto 0; color: var(--haze); }
+.label span {
+  display: block; font: 600 0.62rem/1.3 "Fraunces", serif; letter-spacing: 0.08em;
+  color: var(--maroon-deep); text-transform: uppercase;
+}
+.label .spindle { width: 8px; height: 8px; border-radius: 50%; background: var(--maroon-deep); margin-bottom: 4px; }
+
+.stamp {
+  margin: 4.6rem 0 0; font: 400 0.78rem/1.4 "Courier Prime", monospace; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--maroon);
+}
+.stamp b { font: 600 1.1rem/1 "Fraunces", serif; letter-spacing: 0.02em; color: var(--mustard); margin-right: 0.3em; }
+.stamp-note { margin: 0.5rem 0 0; font-style: italic; font-size: 1.05rem; opacity: 0.65; max-width: 36ch; }
+.room-music .scroll-cue {
+  margin-top: 5vh; font: 400 0.68rem/1 "Courier Prime", monospace; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--maroon); opacity: 0.55;
+}
 
 /* ---------- Tracklist ---------- */
-body[data-room="music"] .tracks { counter-reset: t; gap: 0; border-top: 1px solid var(--line); }
-body[data-room="music"] .track {
-  counter-increment: t;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  border-bottom: 1px solid var(--line);
-}
-body[data-room="music"] .track.is-seen { box-shadow: none; }
-body[data-room="music"] .track-btn {
-  display: grid;
-  grid-template-columns: 2.4rem 1fr auto;
-  column-gap: 10px;
-  align-items: baseline;
-  min-height: 64px;
-  padding: 16px 4px;
-  border-radius: 0;
-}
-.track-btn::before {
-  content: counter(t, decimal-leading-zero);
-  grid-column: 1;
-  grid-row: 1 / 3;
-  color: var(--haze);
-  font: 400 0.8rem var(--mono);
-}
-.track-btn::after {
-  content: "+";
-  grid-column: 3;
-  grid-row: 1 / 3;
-  align-self: center;
-  color: var(--flame);
-  font: 400 1.4rem/1 var(--mono);
-}
-.track.is-open .track-btn::after { content: "\2212"; }
-.track.is-seen .track-btn::before { color: var(--flame); }
-.track.is-open .track-title { color: var(--flame-soft); }
-body[data-room="music"] .track-title { grid-column: 2; font-size: 1.25rem; }
-body[data-room="music"] .track-artist { grid-column: 2; font: 400 0.78rem/1.4 var(--mono); letter-spacing: 0.04em; }
-body[data-room="music"] .track-panel { padding: 0 4px 22px calc(2.4rem + 14px); }
-body[data-room="music"] .track-panel p { font: italic 400 1.075rem/1.55 var(--serif); color: var(--moon); }
-body[data-room="music"] .embed { border-radius: 14px; }
-body[data-room="music"] .toast { background: var(--dusk-2); }
+.tracklist-section { padding: 6vh 6vw 8vh; max-width: 760px; margin: 0 auto; position: relative; z-index: 2; }
+.count { margin: 0 0 1.6rem; font: 400 0.72rem/1 "Courier Prime", monospace; letter-spacing: 0.2em; text-transform: uppercase; color: var(--maroon); opacity: 0.6; }
 
+.side-block { padding: 2.2rem 1.8rem; border-radius: 6px; margin-bottom: 2.5rem; }
+.side-warm { background: linear-gradient(180deg, rgba(198, 138, 46, 0.07), transparent); border: 1px solid rgba(198, 138, 46, 0.25); }
+.side-deep { background: linear-gradient(180deg, rgba(92, 26, 26, 0.06), transparent); border: 1px solid rgba(92, 26, 26, 0.2); }
+.side-label {
+  font: 400 0.72rem/1 "Courier Prime", monospace; letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--maroon); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 1rem;
+}
+.side-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.side-desc { font-style: italic; font-size: 1.05rem; color: var(--ink); opacity: 0.65; margin-bottom: 1.4rem; }
+
+.room-music .track,
+.room-music .track.is-seen {
+  background: none; box-shadow: none; border-radius: 0;
+}
+.room-music .track {
+  display: grid; grid-template-columns: 2.4rem 1fr; gap: 1.2rem; align-items: baseline;
+  padding: 1.6rem 0; border-bottom: 1px solid var(--line);
+  transition: padding-left 0.35s ease, opacity 0.6s ease, transform 0.6s ease;
+  opacity: 0; transform: translateY(14px);
+}
+.room-music .track:last-child { border-bottom: 0; }
+.room-music .track.revealed { opacity: 1; transform: translateY(0); }
+.room-music .track:hover { padding-left: 0.4rem; }
+.track-num { font: 400 0.85rem/1 "Courier Prime", monospace; color: var(--mustard); opacity: 0.9; }
+.side-deep .track-num { color: var(--maroon); }
+.track.is-seen .track-num { color: var(--maroon-deep); opacity: 1; }
+.track-info h3 { font: 500 1.5rem/1.2 "Fraunces", serif; color: var(--maroon-deep); margin: 0 0 0.2rem; }
+.side-warm .track-info h3 { color: var(--mustard); }
+.track.is-open .track-info h3 { color: var(--maroon); }
+.track-info .artist {
+  font: 400 0.72rem/1.4 "Courier Prime", monospace; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink); opacity: 0.55; margin-bottom: 0.7rem; min-height: 1em;
+}
+.track-info p { font-size: 1.05rem; line-height: 1.55; color: var(--ink); opacity: 0.82; max-width: 52ch; margin: 0 0 0.9rem; }
+
+.play-btn {
+  min-height: 40px; padding: 0 18px; border: 1px solid var(--maroon); border-radius: 999px; background: transparent;
+  color: var(--maroon); font: 400 0.72rem/1 "Courier Prime", monospace; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer;
+}
+.play-btn::before { content: "\25B6\00a0\00a0"; font-size: 0.6rem; }
+.track.is-open .play-btn { background: var(--maroon); color: var(--cream); }
+.track.is-open .play-btn::before { content: "\25A0\00a0\00a0"; }
+.embed-holder { margin-top: 0.9rem; }
+.room-music .embed { display: block; width: 100%; border: 0; border-radius: 12px; }
+
+/* ---------- Closing ---------- */
+.room-music .closing { max-width: 560px; margin: 0 auto; padding: 6vh 6vw 8vh; text-align: center; position: relative; z-index: 2; }
+.closing .mark { font: italic 400 2.4rem/1 "Fraunces", serif; color: var(--mustard); margin-bottom: 1rem; }
+.room-music .closing p { font-size: 1.3rem; line-height: 1.7; color: var(--maroon-deep); font-style: italic; margin: 0 auto; }
+.closing .sign { margin-top: 2rem; font: 400 0.75rem/1 "Courier Prime", monospace; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink); opacity: 0.6; }
+
+@media (max-width: 520px) {
+  .side-block { padding: 1.6rem 1.1rem; }
+  .room-music .track { grid-template-columns: 2rem 1fr; gap: 0.8rem; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .record { animation: none; }
-  .arm { transition: none; }
+  .vinyl { animation: none !important; }
+  .room-music .track { transition: none; opacity: 1; transform: none; }
 }

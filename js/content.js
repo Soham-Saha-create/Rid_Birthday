@@ -46,23 +46,42 @@ window.CONTENT = {
     }
   },
 
-  /* ---------- Music room ---------- */
+  /* ---------- Music room: a mixtape. Play every song to light the star ---------- */
   music: {
-    title: "Music room",
-    intro: "TODO: one or two lines about why there is a music room.",
+    eyebrow: "a small archive, for you",
+    titlePre: "Songs for",          // the title reads: titlePre + name + titlePost
+    name: "Rid",
+    titlePost: "",
+    subtitle: "TODO: one or two lines about why there is a music room.",
+    labelLines: ["Rid's", "Mix"],   // the text on the middle of the record
+    hint: "click the record",
+    cue: "tracklist below",
     // The 96 is real: it is what Spotify showed for your Blend.
     blend: { percent: 96, label: "Our Blend", note: "TODO: a line about the Blend, or delete this note." },
-    idleLabel: "Pick a song to drop the needle",
-    nowLabel: "Now spinning",
+    playLabel: "Play",
+    closeLabel: "Close",
     progress: "{n} of {total} played",
     // spotifyId is the part of a track link after /track/ and before the ?. Leave "" for no player.
-    tracks: [
-      { title: "TODO: song 1", artist: "TODO: artist", why: "TODO: placeholder caption. One or two lines on why this song made you think of her.", spotifyId: "" },
-      { title: "TODO: song 2", artist: "TODO: artist", why: "TODO: placeholder caption. Keep it light, a small memory or a tiny joke works better than a big statement.", spotifyId: "" },
-      { title: "TODO: song 3", artist: "TODO: artist", why: "TODO: placeholder caption. Something about the first time you heard it and who you pictured.", spotifyId: "" },
-      { title: "TODO: song 4", artist: "TODO: artist", why: "TODO: placeholder caption. A song that matches how she texts or talks.", spotifyId: "" },
-      { title: "TODO: song 5", artist: "TODO: artist", why: "TODO: placeholder caption. The one you are a little nervous to include.", spotifyId: "" }
-    ]
+    sides: [
+      {
+        label: "Side A",
+        desc: "TODO: a few words about this side",
+        tracks: [
+          { title: "TODO: song 1", artist: "TODO: artist", why: "TODO: placeholder caption. One or two lines on why this song made you think of her.", spotifyId: "" },
+          { title: "TODO: song 2", artist: "TODO: artist", why: "TODO: placeholder caption. Keep it light, a small memory or a tiny joke works better than a big statement.", spotifyId: "" }
+        ]
+      },
+      {
+        label: "Side B",
+        desc: "TODO: a few words about this side",
+        tracks: [
+          { title: "TODO: song 3", artist: "TODO: artist", why: "TODO: placeholder caption. Something about the first time you heard it and who you pictured.", spotifyId: "" },
+          { title: "TODO: song 4", artist: "TODO: artist", why: "TODO: placeholder caption. A song that matches how she texts or talks.", spotifyId: "" },
+          { title: "TODO: song 5", artist: "TODO: artist", why: "TODO: placeholder caption. The one you are a little nervous to include.", spotifyId: "" }
+        ]
+      }
+    ],
+    closing: { mark: "\u2014", text: "TODO: a short closing note. Keep it light.", sign: "for Rid" }
   },
 
   /* ---------- Quest (trivia) ---------- */

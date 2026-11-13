@@ -32,27 +32,46 @@
     io.observe(el);
   }
 
-  /* ---------- Music room: a record deck. Play every song to light the star ---------- */
+  /* ---------- Music room: a mixtape. Play every song to light the star ---------- */
   R.music = function () {
-    var M = C.music, total = M.tracks.length, parts = [];
-    head(M.title, M.intro);
+    var M = C.music, parts = [], total = 0, n = 0;
+    M.sides.forEach(function (sd) { total += sd.tracks.length; });
+    var seen = S.seen('music');
 
-    // The deck: a record that spins while a song is open, with the Blend as its label.
-    var deck = h('div', { class: 'deck' });
-    var record = h('div', { class: 'record', 'aria-hidden': 'true' });
-    var label = h('div', { class: 'record-label', 'aria-hidden': 'true' }, M.blend ? [
-      h('span', { class: 'rl-num', text: M.blend.percent + '%' }),
-      h('span', { class: 'rl-text', text: M.blend.label })
-    ] : []);
-    var arm = h('div', { class: 'arm', 'aria-hidden': 'true' });
-    var now = h('p', { class: 'now', 'aria-live': 'polite', text: M.idleLabel });
+    // --- the stage: title, record, hint ---
+    var stage = h('section', { class: 'stage' });
+    stage.appendChild(h('div', { class: 'eyebrow', text: M.eyebrow }));
+    stage.appendChild(h('h1', { class: 'title' }, [M.titlePre + ' ', h('em', { text: M.name }), M.titlePost ? ' ' + M.titlePost : '']));
+    stage.appendChild(h('p', { class: 'subtitle', text: M.subtitle }));
+
+    var vinyl = h('div', { class: 'vinyl' }, [
+      h('div', { class: 'label' }, [
+        h('div', { class: 'spindle' }),
+        h('span', { text: M.labelLines[0] }),
+        h('span', { text: M.labelLines[1] || '' })
+      ])
+    ]);
+    var wrap = h('div', { class: 'record-wrap', role: 'button', tabindex: '0', 'aria-label': 'Spin the record' }, [
+      vinyl, h('div', { class: 'sleeve-hint', text: M.hint })
+    ]);
+    function setSpin(on) { vinyl.classList.toggle('spinning', on); }
+    wrap.addEventListener('click', function () { setSpin(!vinyl.classList.contains('spinning')); });
+    wrap.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSpin(!vinyl.classList.contains('spinning')); }
+    });
+    stage.appendChild(wrap);
+
+    if (M.blend) {
+      stage.appendChild(h('p', { class: 'stamp' }, [h('b', { text: M.blend.percent + '%' }), ' ' + M.blend.label]));
+      if (M.blend.note) stage.appendChild(h('p', { class: 'stamp-note', text: M.blend.note }));
+    }
+    stage.appendChild(h('div', { class: 'scroll-cue', text: '\u2193 ' + M.cue + ' \u2193' }));
+    root.appendChild(stage);
+
+    // --- the tracklist ---
+    var section = h('section', { class: 'tracklist-section' });
     var count = h('p', { class: 'count' });
-    deck.appendChild(h('div', { class: 'plate' }, [record, label, arm]));
-    deck.appendChild(now);
-    deck.appendChild(count);
-    if (M.blend && M.blend.note) deck.appendChild(h('p', { class: 'blend-note', text: M.blend.note }));
-    root.appendChild(deck);
-
+    section.appendChild(count);
     function updateCount() {
       count.textContent = (M.progress || '{n} of {total} played')
         .replace('{n}', S.seen('music').length).replace('{total}', total);
@@ -61,54 +80,83 @@
 
     function closeTrack(i) {
       var t = parts[i];
-      t.panel.hidden = true;
+      t.holder.hidden = true;
+      t.holder.textContent = '';              // removing the player stops the audio
+      t.btn.textContent = M.playLabel;
       t.btn.setAttribute('aria-expanded', 'false');
-      t.li.classList.remove('is-open');
-      var f = t.panel.querySelector('iframe');
-      if (f) f.parentNode.removeChild(f);   // removing the player stops the audio
+      t.el.classList.remove('is-open');
     }
     function openTrack(i) {
-      var t = parts[i], tr = M.tracks[i];
       parts.forEach(function (_, k) { if (k !== i) closeTrack(k); });
-      t.panel.hidden = false;
+      var t = parts[i];
+      t.btn.textContent = M.closeLabel;
       t.btn.setAttribute('aria-expanded', 'true');
-      t.li.classList.add('is-open', 'is-seen');
-      if (tr.spotifyId && !t.panel.querySelector('iframe')) {
-        t.panel.appendChild(h('iframe', {
-          class: 'embed', src: 'https://open.spotify.com/embed/track/' + tr.spotifyId,
-          loading: 'lazy', allow: 'encrypted-media', title: tr.title, height: '152'
+      t.el.classList.add('is-open', 'is-seen');
+      if (t.data.spotifyId) {
+        t.holder.hidden = false;
+        t.holder.appendChild(h('iframe', {
+          class: 'embed', src: 'https://open.spotify.com/embed/track/' + t.data.spotifyId,
+          loading: 'lazy', allow: 'encrypted-media', title: t.data.title, height: '152'
         }));
       }
-      deck.classList.add('is-playing');
-      now.textContent = (M.nowLabel || 'Now spinning') + ': ' + tr.title;
+      setSpin(true);
     }
 
-    var seen = S.seen('music');
-    var list = h('ol', { class: 'tracks' });
-    root.appendChild(list);
-    M.tracks.forEach(function (t, i) {
-      var panelId = 'track-' + i;
-      var panel = h('div', { class: 'track-panel', id: panelId, hidden: true }, [h('p', { text: t.why })]);
-      var btn = h('button', { class: 'track-btn', type: 'button', 'aria-expanded': 'false', 'aria-controls': panelId }, [
-        h('span', { class: 'track-title', text: t.title }),
-        h('span', { class: 'track-artist', text: t.artist })
+    M.sides.forEach(function (sd, si) {
+      var block = h('div', { class: 'side-block ' + (si % 2 ? 'side-deep' : 'side-warm') }, [
+        h('div', { class: 'side-label', text: sd.label }),
+        h('div', { class: 'side-desc', text: sd.desc })
       ]);
-      var li = h('li', { class: 'track' + (seen.indexOf(i) >= 0 ? ' is-seen' : '') }, [btn, panel]);
-      parts.push({ li: li, btn: btn, panel: panel });
-      btn.addEventListener('click', function () {
-        if (panel.hidden) {
-          openTrack(i);
-          var n = S.mark('music', i);
-          updateCount();
-          if (n >= total) finish();
-        } else {
-          closeTrack(i);
-          deck.classList.remove('is-playing');
-          now.textContent = M.idleLabel;
-        }
+      sd.tracks.forEach(function (t) {
+        var i = n++;
+        var btn = h('button', { class: 'play-btn', type: 'button', 'aria-expanded': 'false', text: M.playLabel });
+        var holder = h('div', { class: 'embed-holder', hidden: true });
+        var el = h('div', { class: 'track' + (seen.indexOf(i) >= 0 ? ' is-seen' : '') }, [
+          h('div', { class: 'track-num', text: (i < 9 ? '0' : '') + (i + 1) }),
+          h('div', { class: 'track-info' }, [
+            h('h3', { text: t.title }),
+            h('div', { class: 'artist', text: t.artist }),
+            h('p', { text: t.why }),
+            btn, holder
+          ])
+        ]);
+        parts.push({ el: el, btn: btn, holder: holder, data: t });
+        btn.addEventListener('click', function () {
+          if (el.classList.contains('is-open')) {
+            closeTrack(i); setSpin(false);
+          } else {
+            openTrack(i);
+            var m = S.mark('music', i);
+            updateCount();
+            if (m >= total) finish();
+          }
+        });
+        block.appendChild(el);
       });
-      list.appendChild(li);
+      section.appendChild(block);
     });
+    root.appendChild(section);
+
+    if (M.closing) {
+      root.appendChild(h('section', { class: 'closing' }, [
+        h('div', { class: 'mark', text: M.closing.mark }),
+        h('p', { text: M.closing.text }),
+        M.closing.sign ? h('div', { class: 'sign', text: M.closing.sign }) : null
+      ]));
+    }
+
+    // tracks fade in as they scroll into view
+    var els = parts.map(function (t) { return t.el; });
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e, k) {
+          if (e.isIntersecting) { setTimeout(function () { e.target.classList.add('revealed'); }, k * 80); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.15 });
+      els.forEach(function (el) { io.observe(el); });
+    } else {
+      els.forEach(function (el) { el.classList.add('revealed'); });
+    }
   };
 
   /* ---------- Quest: trivia, each right answer opens a hidden message ---------- */
