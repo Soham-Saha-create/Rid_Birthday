@@ -32,42 +32,79 @@
     io.observe(el);
   }
 
-  /* ---------- Music room: open every song ---------- */
+  /* ---------- Music room: a record deck. Play every song to light the star ---------- */
   R.music = function () {
-    var M = C.music, seen = S.seen('music');
+    var M = C.music, total = M.tracks.length, parts = [];
     head(M.title, M.intro);
 
-    if (M.blend) {
-      root.appendChild(h('div', { class: 'blend' }, [
-        h('p', { class: 'blend-num', text: M.blend.percent + '%' }),
-        h('p', { class: 'blend-label', text: M.blend.label }),
-        M.blend.note ? h('p', { class: 'blend-note', text: M.blend.note }) : null
-      ]));
+    // The deck: a record that spins while a song is open, with the Blend as its label.
+    var deck = h('div', { class: 'deck' });
+    var record = h('div', { class: 'record', 'aria-hidden': 'true' });
+    var label = h('div', { class: 'record-label', 'aria-hidden': 'true' }, M.blend ? [
+      h('span', { class: 'rl-num', text: M.blend.percent + '%' }),
+      h('span', { class: 'rl-text', text: M.blend.label })
+    ] : []);
+    var arm = h('div', { class: 'arm', 'aria-hidden': 'true' });
+    var now = h('p', { class: 'now', 'aria-live': 'polite', text: M.idleLabel });
+    var count = h('p', { class: 'count' });
+    deck.appendChild(h('div', { class: 'plate' }, [record, label, arm]));
+    deck.appendChild(now);
+    deck.appendChild(count);
+    if (M.blend && M.blend.note) deck.appendChild(h('p', { class: 'blend-note', text: M.blend.note }));
+    root.appendChild(deck);
+
+    function updateCount() {
+      count.textContent = (M.progress || '{n} of {total} played')
+        .replace('{n}', S.seen('music').length).replace('{total}', total);
+    }
+    updateCount();
+
+    function closeTrack(i) {
+      var t = parts[i];
+      t.panel.hidden = true;
+      t.btn.setAttribute('aria-expanded', 'false');
+      t.li.classList.remove('is-open');
+      var f = t.panel.querySelector('iframe');
+      if (f) f.parentNode.removeChild(f);   // removing the player stops the audio
+    }
+    function openTrack(i) {
+      var t = parts[i], tr = M.tracks[i];
+      parts.forEach(function (_, k) { if (k !== i) closeTrack(k); });
+      t.panel.hidden = false;
+      t.btn.setAttribute('aria-expanded', 'true');
+      t.li.classList.add('is-open', 'is-seen');
+      if (tr.spotifyId && !t.panel.querySelector('iframe')) {
+        t.panel.appendChild(h('iframe', {
+          class: 'embed', src: 'https://open.spotify.com/embed/track/' + tr.spotifyId,
+          loading: 'lazy', allow: 'encrypted-media', title: tr.title, height: '152'
+        }));
+      }
+      deck.classList.add('is-playing');
+      now.textContent = (M.nowLabel || 'Now spinning') + ': ' + tr.title;
     }
 
-    var list = h('ul', { class: 'tracks' });
+    var seen = S.seen('music');
+    var list = h('ol', { class: 'tracks' });
     root.appendChild(list);
     M.tracks.forEach(function (t, i) {
       var panelId = 'track-' + i;
       var panel = h('div', { class: 'track-panel', id: panelId, hidden: true }, [h('p', { text: t.why })]);
-      if (t.spotifyId) {
-        panel.appendChild(h('iframe', {
-          class: 'embed', src: 'https://open.spotify.com/embed/track/' + t.spotifyId,
-          loading: 'lazy', allow: 'encrypted-media', title: t.title, height: '152'
-        }));
-      }
       var btn = h('button', { class: 'track-btn', type: 'button', 'aria-expanded': 'false', 'aria-controls': panelId }, [
         h('span', { class: 'track-title', text: t.title }),
         h('span', { class: 'track-artist', text: t.artist })
       ]);
       var li = h('li', { class: 'track' + (seen.indexOf(i) >= 0 ? ' is-seen' : '') }, [btn, panel]);
+      parts.push({ li: li, btn: btn, panel: panel });
       btn.addEventListener('click', function () {
-        var opening = panel.hidden;
-        panel.hidden = !opening;
-        btn.setAttribute('aria-expanded', String(opening));
-        if (opening) {
-          li.classList.add('is-seen');
-          if (S.mark('music', i) >= M.tracks.length) finish();
+        if (panel.hidden) {
+          openTrack(i);
+          var n = S.mark('music', i);
+          updateCount();
+          if (n >= total) finish();
+        } else {
+          closeTrack(i);
+          deck.classList.remove('is-playing');
+          now.textContent = M.idleLabel;
         }
       });
       list.appendChild(li);
