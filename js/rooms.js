@@ -223,9 +223,10 @@
     show(Math.min(S.seen('quest').length, qs.length));
   };
 
-  /* ---------- Letters: open all seven ---------- */
+  /* ---------- Letters: open all seven. Each letter is typed out, with a skip button ---------- */
   R.letters = function () {
-    var L = C.letters, seen = S.seen('letters');
+    var L = C.letters, seen = S.seen('letters'), token = 0;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     head(L.title, L.intro);
 
     var grid = h('ul', { class: 'envelopes' });
@@ -233,6 +234,44 @@
     var dlg = h('dialog', { class: 'letter', 'aria-label': 'Letter' });
     document.body.appendChild(dlg);
     dlg.addEventListener('click', function (e) { if (e.target === dlg && dlg.close) dlg.close(); });
+    dlg.addEventListener('close', function () { token++; });   // stop typing when the letter is closed
+
+    // Types each target's text out one character at a time. The full text is already in the
+    // page (hidden), so the paper never changes size while it types. Returns a skip function.
+    function typewrite(targets, onDone) {
+      var my = ++token, ti = 0, ci = 0, timer = null;
+      var caret = h('span', { class: 'caret', 'aria-hidden': 'true' });
+      targets.forEach(function (t) {
+        t.typed = document.createTextNode('');
+        t.rest = h('span', { class: 'untyped', text: t.text });
+        t.el.appendChild(t.typed);
+        t.el.appendChild(t.rest);
+      });
+      function finishAll() {
+        clearTimeout(timer);
+        targets.forEach(function (t) { t.typed.nodeValue = t.text; t.rest.textContent = ''; });
+        if (caret.parentNode) caret.parentNode.removeChild(caret);
+        onDone();
+      }
+      function step() {
+        if (my !== token) return;
+        if (ti >= targets.length) { finishAll(); return; }
+        var t = targets[ti];
+        if (ci === 0) t.el.insertBefore(caret, t.rest);
+        if (ci >= t.text.length) { ti++; ci = 0; timer = setTimeout(step, 380); return; }
+        var ch = t.text.charAt(ci++);
+        t.typed.nodeValue = t.text.slice(0, ci);
+        t.rest.textContent = t.text.slice(ci);
+        if (ci % 24 === 0 && caret.scrollIntoView) caret.scrollIntoView({ block: 'nearest' });
+        var wait = 20 + Math.random() * 22;
+        if (ch === '.' || ch === '!' || ch === '?') wait = 300;
+        else if (ch === ',' || ch === ';' || ch === ':') wait = 150;
+        timer = setTimeout(step, wait);
+      }
+      if (reduce) { finishAll(); return function () {}; }
+      timer = setTimeout(step, 450);
+      return function skip() { if (my === token) { token++; finishAll(); } };
+    }
 
     L.items.forEach(function (it, i) {
       var state = h('span', { class: 'env-state', text: seen.indexOf(i) >= 0 ? L.read : L.sealed });
@@ -241,12 +280,23 @@
       ]);
       b.addEventListener('click', function () {
         dlg.textContent = '';
+        var targets = [];
+        var meaning = h('p', { class: 'letter-meaning' });
+        targets.push({ el: meaning, text: it.meaning || '' });
+        var bodyEls = (it.body || []).map(function (txt) {
+          var p = h('p', { class: 'letter-body' });
+          targets.push({ el: p, text: txt });
+          return p;
+        });
+        var skip = h('button', { class: 'btn btn-quiet letter-skip', type: 'button', text: L.skip || 'Skip' });
         var close = h('button', { class: 'btn btn-quiet letter-close', type: 'button', text: L.close });
-        close.addEventListener('click', function () { if (dlg.close) dlg.close(); else dlg.removeAttribute('open'); });
-        dlg.appendChild(h('div', { class: 'letter-inner' },
-          [h('h2', { text: it.name }), h('p', { class: 'letter-meaning', text: it.meaning })]
-            .concat(paras(it.body, 'letter-body'), [close])));
+        close.addEventListener('click', function () { token++; if (dlg.close) dlg.close(); else dlg.removeAttribute('open'); });
+        var inner = h('div', { class: 'letter-inner', 'aria-busy': 'true' },
+          [h('h2', { text: it.name }), meaning].concat(bodyEls, [h('div', { class: 'letter-actions' }, [skip, close])]));
+        dlg.appendChild(inner);
         if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+        var stop = typewrite(targets, function () { skip.hidden = true; inner.removeAttribute('aria-busy'); });
+        skip.addEventListener('click', stop);
         b.classList.add('is-read');
         state.textContent = L.read;
         if (S.mark('letters', i) >= L.items.length) finish();
