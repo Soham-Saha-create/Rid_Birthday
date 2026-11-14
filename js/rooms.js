@@ -161,7 +161,17 @@
 
   /* ---------- Quest: a game show with lifelines and sound effects ---------- */
   R.quest = function () {
-    var Q = C.quest, qs = Q.questions, LET = ['A', 'B', 'C', 'D'];
+    // Anything missing from content.js falls back to these.
+    var Q = Object.assign({
+      hearts: 3, checkpoints: [0, 2], heartsLabel: 'Hearts',
+      bonusTease: 'Finish with zero wrong answers and a secret bonus opens.',
+      bonusLabel: 'Perfect run bonus', bonus: 'TODO: bonus message',
+      bonusMissed: 'No bonus this time. A flawless run opens one more message.',
+      replay: 'Play again for the bonus',
+      gameOverTitle: 'Out of hearts', gameOverText: 'Back to question {n}. Your hearts are full again.',
+      tryAgain: 'Try again', hostGameOver: 'Oh no, that was all three hearts. Shake it off.'
+    }, C.quest);
+    var qs = Q.questions, LET = ['A', 'B', 'C', 'D'];
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     head(Q.title, Q.intro);
 
@@ -190,6 +200,7 @@
       right: function () { [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) { tone(f, i * 0.09, 0.3, 'triangle', 0.2); tone(f * 2, i * 0.09, 0.18, 'sine', 0.05); }); },
       wrong: function () { tone(150, 0, 0.55, 'sawtooth', 0.22, 90); tone(158, 0, 0.55, 'square', 0.1, 95); },
       life:  function () { tone(400, 0, 0.12, 'sine', 0.15, 800); tone(800, 0.12, 0.16, 'sine', 0.12, 1250); },
+      over:  function () { [392, 349.23, 311.13, 261.63].forEach(function (f, i) { tone(f, i * 0.22, 0.4, 'sawtooth', 0.14); }); },
       win:   function () { [523.25, 523.25, 523.25, 659.25, 783.99, 659.25, 783.99, 1046.5].forEach(function (f, i) { tone(f, i * 0.14, 0.3, 'square', 0.1); }); }
     };
     function pick(list) { return Array.isArray(list) ? list[Math.floor(Math.random() * list.length)] : list; }
@@ -218,6 +229,31 @@
       bubble.classList.remove('pop'); void bubble.offsetWidth; bubble.classList.add('pop');
     }
 
+    // hearts and wrong-answer count survive a refresh, so reloading is not an escape
+    function ld(k, d) {
+      var v;
+      if (S.extra) v = S.extra(k);
+      else { try { v = JSON.parse(localStorage.getItem('ridQuest.' + k)); } catch (e) {} }
+      return typeof v === 'number' ? v : d;
+    }
+    function sv(k, v) {
+      if (S.extra) S.extra(k, v);
+      else { try { localStorage.setItem('ridQuest.' + k, JSON.stringify(v)); } catch (e) {} }
+    }
+    var MAXH = Q.hearts;
+    if (ld('hearts', null) === null) { sv('hearts', MAXH); sv('wrongs', 0); }
+    var hearts = ld('hearts', MAXH), wrongs = ld('wrongs', 0);
+    if (hearts <= 0) hearts = MAXH;
+    var heartEls = [];
+    var heartRow = h('div', { class: 'gs-hearts', role: 'img' });
+    for (var hi = 0; hi < MAXH; hi++) { var he = h('span', { class: 'gs-heart', text: '\u2665' }); heartEls.push(he); heartRow.appendChild(he); }
+    function paintHearts() {
+      heartEls.forEach(function (el, k) { el.classList.toggle('is-lost', k >= hearts); });
+      heartRow.setAttribute('aria-label', Q.heartsLabel + ': ' + hearts + ' of ' + MAXH);
+    }
+    paintHearts();
+    root.appendChild(h('div', { class: 'gs-stakes' }, [heartRow, h('p', { class: 'gs-tease', text: Q.bonusTease })]));
+
     var used = { fifty: false, phone: false, audience: false };
     var lifeBtns = {};
     var lifeRow = h('div', { class: 'gs-lifelines' });
@@ -238,13 +274,14 @@
         el.classList.toggle('is-now', k === i);
       });
     }
-    function renderRewards() {
+    function renderRewards(withBonus) {
       var n = S.seen('quest').length;
       rewards.textContent = '';
       if (!n) { rewards.hidden = true; return; }
       rewards.hidden = false;
       rewards.appendChild(h('h2', { text: Q.collectedTitle }));
       for (var i = 0; i < n && i < qs.length; i++) rewards.appendChild(h('p', { class: 'gs-reward-line', text: qs[i].reward }));
+      if (withBonus && n >= qs.length) rewards.appendChild(h('p', { class: 'gs-reward-line', text: Q.bonus }));
     }
     function confetti() {
       if (reduce) return;
@@ -262,6 +299,24 @@
       setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); }, 5200);
     }
 
+    // ---- out of hearts: back to the last checkpoint ----
+    function gameOver(i) {
+      var back = 0;
+      (Q.checkpoints || [0]).forEach(function (c) { if (c <= i && c > back) back = c; });
+      lifeRow.hidden = true;
+      panel.textContent = '';
+      var retry = h('button', { class: 'btn gs-next', type: 'button', text: Q.tryAgain });
+      retry.addEventListener('click', function () {
+        hearts = MAXH; sv('hearts', hearts); paintHearts(); sfx.pick(); show(back, false);
+      });
+      panel.appendChild(h('div', { class: 'gs-over' }, [
+        h('h2', { text: Q.gameOverTitle }),
+        h('p', { text: Q.gameOverText.replace('{n}', String(back + 1)) }),
+        retry
+      ]));
+      retry.focus();
+    }
+
     // ---- one question ----
     function show(i, fresh) {
       panel.textContent = '';
@@ -270,7 +325,21 @@
         lifeRow.hidden = true;
         panel.appendChild(h('div', { class: 'gs-qbox' }, [h('p', { class: 'gs-q', text: Q.doneLine })]));
         say(Q.hostFinal);
-        renderRewards();
+        renderRewards(wrongs === 0);
+        if (wrongs === 0) {
+          panel.appendChild(h('div', { class: 'gs-reward' }, [
+            h('p', { class: 'gs-reward-label', text: Q.bonusLabel }),
+            h('p', { class: 'gs-reward-text', text: Q.bonus })
+          ]));
+        } else {
+          panel.appendChild(h('p', { class: 'gs-msg', text: Q.bonusMissed }));
+          var again = h('button', { class: 'btn gs-next', type: 'button', text: Q.replay });
+          again.addEventListener('click', function () {
+            wrongs = 0; hearts = MAXH; sv('wrongs', 0); sv('hearts', MAXH);
+            paintHearts(); sfx.pick(); show(0, false);
+          });
+          panel.appendChild(again);
+        }
         if (fresh) { sfx.win(); confetti(); }
         finish();
         return;
@@ -364,10 +433,19 @@
             renderRewards();
             next.focus();
           } else {
-            wrong += 1;
+            wrong += 1; wrongs += 1; hearts -= 1;
+            sv('wrongs', wrongs); sv('hearts', hearts);
             b.disabled = true; b.classList.add('is-wrong');
-            sfx.wrong(); say(pick(Q.hostWrong));
+            paintHearts();
             panel.classList.remove('gs-shake'); void panel.offsetWidth; panel.classList.add('gs-shake');
+            if (hearts <= 0) {
+              locked = true; refreshLife();
+              optBtns.forEach(function (x) { x.disabled = true; });
+              sfx.over(); say(Q.hostGameOver);
+              setTimeout(function () { gameOver(i); }, 1300);
+              return;
+            }
+            sfx.wrong(); say(pick(Q.hostWrong));
             msg.textContent = (wrong >= 2 && q.hint) ? Q.hintPrefix + q.hint : '';
           }
         });

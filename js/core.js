@@ -47,6 +47,12 @@
       if (a.indexOf(id) < 0) { a.push(id); save(); }
       return a.length;
     },
+    // small saved extras for a room (like the quest hearts). Cleared by ?reset=1 with the rest.
+    extra: function (k, v) {
+      var s = load(); if (!s.extra) s.extra = {};
+      if (arguments.length > 1) { s.extra[k] = v; save(); }
+      return s.extra[k];
+    },
     secretFound: function () { return !!load().secret; },
     unlockSecret: function () {
       var s = load(), first = !s.secret;
