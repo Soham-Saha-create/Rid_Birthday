@@ -1,0 +1,158 @@
+/* ==========================================================
+   The Hot Seat: a loud cobalt and yellow game show.
+   Scoped to <body data-room="quest">.
+   ========================================================== */
+body[data-room="quest"] {
+  --ink: #0b1670;
+  --moon: #ffffff;
+  --haze: rgba(255, 255, 255, 0.78);
+  --flame: #ffd23f;
+  --flame-soft: #ffe58a;
+  --dusk: #16299b;
+  --dusk-2: #2146d0;
+  --line: rgba(255, 255, 255, 0.24);
+  --serif: "Lilita One", "Nunito", sans-serif;
+  --gold: #ffd23f;
+  --green: #1fb86a;
+  --red: #e5384f;
+  font-family: "Nunito", "Instrument Sans", system-ui, sans-serif;
+  color: #fff;
+  background: radial-gradient(ellipse 130% 70% at 50% 0%, #3d66ff 0%, #1f3fc9 38%, #0b1670 100%);
+  background-attachment: fixed;
+}
+body[data-room="quest"] #sky { display: none; }
+/* stage lights */
+body[data-room="quest"]::before {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: conic-gradient(from 195deg at 50% -12%, transparent 0 9%, rgba(255, 255, 255, 0.09) 11%, transparent 15% 26%, rgba(255, 255, 255, 0.07) 29%, transparent 33% 44%, rgba(255, 255, 255, 0.07) 47%, transparent 51% 100%);
+}
+body[data-room="quest"] .page { position: relative; z-index: 1; max-width: 640px; }
+body[data-room="quest"] .back { color: #fff; font-weight: 800; }
+body[data-room="quest"] h1 {
+  text-align: center; font: 400 clamp(2.2rem, 9vw, 3.2rem)/1.05 "Lilita One", sans-serif; color: var(--gold);
+  text-shadow: 0 3px 0 #b8860b, 0 8px 18px rgba(0, 0, 0, 0.35); margin-bottom: 0.25em;
+}
+body[data-room="quest"] .lede { text-align: center; margin-left: auto; margin-right: auto; font-weight: 700; color: #fff; max-width: 34ch; }
+body[data-room="quest"] .btn { background: var(--gold); color: #0b1670; font: 400 1.05rem/1 "Lilita One", sans-serif; letter-spacing: 0.02em; box-shadow: 0 4px 0 #b8860b; }
+body[data-room="quest"] .btn:hover { background: #ffe066; }
+body[data-room="quest"] :focus-visible { outline-color: #fff; }
+body[data-room="quest"] .toast { background: #fff; color: #0b1670; font-weight: 800; }
+
+/* ---------- Top row: progress and sound ---------- */
+.gs-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 18px 0 8px; }
+.gs-ladder { display: flex; gap: 7px; }
+.gs-step {
+  width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+  font: 400 0.95rem/1 "Lilita One", sans-serif; color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.1); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+.gs-step.is-done { background: var(--gold); color: #0b1670; box-shadow: 0 0 14px rgba(255, 210, 63, 0.65); }
+.gs-step.is-now { color: var(--gold); box-shadow: inset 0 0 0 2px var(--gold); animation: gs-glow 1.6s ease-in-out infinite; }
+@keyframes gs-glow { 50% { box-shadow: inset 0 0 0 2px var(--gold), 0 0 16px rgba(255, 210, 63, 0.7); } }
+.gs-mute {
+  min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.14); color: #fff; font: 800 0.78rem/1 "Nunito", sans-serif;
+}
+.gs-mute[aria-pressed="true"] { opacity: 0.65; }
+
+/* ---------- Host ---------- */
+.gs-host { display: flex; align-items: flex-end; gap: 12px; margin: 10px 0 14px; }
+.gs-avatar {
+  flex: none; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--gold); color: #0b1670; font: 400 1.5rem/1 "Lilita One", sans-serif; box-shadow: 0 4px 0 #b8860b;
+}
+.gs-bubble {
+  position: relative; background: #fff; color: #0b1670; border-radius: 18px 18px 18px 4px; padding: 11px 15px;
+  font: 800 0.98rem/1.35 "Nunito", sans-serif; box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25); min-height: 44px; display: flex; align-items: center;
+}
+.gs-bubble.pop { animation: gs-pop 0.35s cubic-bezier(0.3, 1.6, 0.5, 1); }
+@keyframes gs-pop { from { transform: scale(0.85); opacity: 0.4; } to { transform: scale(1); opacity: 1; } }
+
+/* ---------- Lifelines ---------- */
+.gs-lifelines { display: flex; gap: 10px; justify-content: center; margin: 4px 0 16px; }
+.gs-lifelines[hidden] { display: none; }
+.gs-life {
+  position: relative; min-width: 92px; min-height: 46px; padding: 0 16px; border-radius: 999px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.1); color: var(--gold); border: 2px solid var(--gold);
+  font: 400 1rem/1 "Lilita One", sans-serif; letter-spacing: 0.02em; transition: transform 0.15s, background 0.15s;
+}
+.gs-life:hover:not(:disabled) { background: rgba(255, 210, 63, 0.2); transform: translateY(-2px); }
+.gs-life:disabled { cursor: default; opacity: 0.45; }
+.gs-life.is-used { opacity: 0.4; border-color: rgba(255, 255, 255, 0.5); color: rgba(255, 255, 255, 0.7); }
+.gs-life.is-used::after {      /* the red cross over a used lifeline */
+  content: ""; position: absolute; left: 12%; right: 12%; top: 50%; height: 3px; background: var(--red); border-radius: 2px; transform: rotate(-14deg);
+}
+
+/* ---------- Question and answer bars ---------- */
+.gs-panel { margin-top: 6px; }
+.gs-count { margin: 0 0 8px; text-align: center; font: 800 0.78rem/1 "Nunito", sans-serif; letter-spacing: 0.16em; text-transform: uppercase; color: var(--flame-soft); }
+.gs-qbox, .gs-option { --shape: polygon(4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%, 0 50%); }
+.gs-qbox {
+  position: relative; clip-path: var(--shape); background: #fff; padding: 2px; margin: 0 0 16px;
+}
+.gs-qbox::before {
+  content: ""; position: absolute; inset: 2px; clip-path: var(--shape); background: linear-gradient(#1b30b0, #0a1468);
+}
+.gs-q { position: relative; margin: 0; padding: 22px 30px; text-align: center; font: 400 1.3rem/1.3 "Lilita One", sans-serif; color: #fff; letter-spacing: 0.01em; }
+.gs-options { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.gs-option {
+  all: unset; box-sizing: border-box; position: relative; display: flex; align-items: center; gap: 10px; cursor: pointer;
+  min-height: 56px; padding: 0 28px; clip-path: var(--shape); background: #fff; -webkit-tap-highlight-color: transparent;
+  color: #fff; font: 800 1rem/1.25 "Nunito", sans-serif; transition: transform 0.12s ease;
+}
+.gs-option::before {
+  content: ""; position: absolute; inset: 2px; clip-path: var(--shape); background: linear-gradient(#1b30b0, #0a1468); transition: background 0.2s;
+}
+.gs-option > * { position: relative; z-index: 1; }
+.gs-letter { color: var(--gold); font: 400 1.15rem/1 "Lilita One", sans-serif; }
+.gs-option:hover:not(:disabled)::before { background: linear-gradient(#e9a500, #b57a00); }
+.gs-option:hover:not(:disabled) { transform: scale(1.015); }
+.gs-option:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; clip-path: none; }
+.gs-option.is-right::before { background: linear-gradient(#2fd07a, #0f8f4d); }
+.gs-option.is-right { animation: gs-flash 0.5s ease 2; }
+.gs-option.is-right .gs-letter { color: #fff; }
+.gs-option.is-wrong::before { background: linear-gradient(#f0566b, #a8182e); }
+.gs-option.is-wrong { opacity: 0.8; cursor: default; }
+.gs-option.is-gone { display: none; }
+.gs-option:disabled { cursor: default; }
+@keyframes gs-flash { 50% { filter: brightness(1.5); } }
+.gs-shake { animation: gs-shake 0.4s; }
+@keyframes gs-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-9px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(4px); } }
+.gs-msg { margin: 12px 0 0; min-height: 1.2em; text-align: center; font-weight: 800; color: var(--flame-soft); }
+
+/* ---------- Lifeline answers ---------- */
+.gs-extra { margin-top: 14px; }
+.gs-info { background: rgba(255, 255, 255, 0.14); border-radius: 16px; padding: 12px 16px; font-weight: 700; line-height: 1.4; }
+.gs-info p { margin: 0; }
+.gs-info-title { font: 400 0.9rem/1 "Lilita One", sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px !important; }
+.gs-bar { display: grid; grid-template-columns: 1.4rem 1fr 3rem; gap: 8px; align-items: center; margin: 7px 0; }
+.gs-bar-l { font: 400 1rem/1 "Lilita One", sans-serif; color: var(--gold); }
+.gs-bar-track { height: 14px; border-radius: 7px; background: rgba(0, 0, 0, 0.25); overflow: hidden; }
+.gs-bar-fill { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ffd23f, #ff9d2f); border-radius: 7px; transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.gs-bar-v { text-align: right; font-weight: 800; font-size: 0.9rem; }
+
+/* ---------- Prize and next ---------- */
+.gs-reward { margin: 18px 0 14px; padding: 16px 18px; border-radius: 18px; background: var(--gold); color: #0b1670; box-shadow: 0 6px 0 #b8860b; animation: gs-pop 0.45s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.gs-reward p { margin: 0; }
+.gs-reward-label { font: 400 0.78rem/1 "Lilita One", sans-serif; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75; margin-bottom: 8px !important; }
+.gs-reward-text { font: 800 1.1rem/1.45 "Nunito", sans-serif; }
+.gs-next { display: block; margin: 0 auto; }
+.gs-rewards { margin-top: 34px; padding-top: 18px; border-top: 2px dashed rgba(255, 255, 255, 0.3); }
+.gs-rewards[hidden] { display: none; }
+.gs-rewards h2 { font: 400 1.25rem/1.2 "Lilita One", sans-serif; color: var(--gold); margin: 0 0 12px; }
+.gs-reward-line { margin: 0 0 10px; padding: 12px 16px; border-radius: 14px; background: rgba(255, 255, 255, 0.12); font-weight: 700; line-height: 1.45; }
+
+/* ---------- Confetti ---------- */
+.gs-confetti { position: fixed; inset: 0; z-index: 50; pointer-events: none; overflow: hidden; }
+.gs-confetti span { position: absolute; top: -14px; width: 9px; height: 15px; border-radius: 2px; opacity: 0.95; animation: gs-fall linear forwards; }
+@keyframes gs-fall { to { transform: translateY(105vh) rotate(720deg); } }
+
+@media (min-width: 560px) {
+  .gs-options { grid-template-columns: 1fr 1fr; }
+  .gs-option.is-gone { display: flex; visibility: hidden; }
+  .gs-q { font-size: 1.55rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gs-step.is-now, .gs-option.is-right, .gs-shake, .gs-bubble.pop, .gs-reward { animation: none; }
+  .gs-bar-fill { transition: none; }
+}
