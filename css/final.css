@@ -1,0 +1,92 @@
+/* ==========================================================
+   The last star: a sunrise. Peach to coral to gold, a sun that
+   rises behind the words, a candle for a wish, a recap of her run.
+   Scoped to <body data-room="final">.
+   ========================================================== */
+body[data-room="final"] {
+  --ink: #ffd9c0;
+  --moon: #4a2220;
+  --haze: rgba(74, 34, 32, 0.7);
+  --flame: #e8742c;
+  --flame-soft: #b4541c;
+  --ember: rgba(74, 34, 32, 0.4);
+  --dusk: #fff1e4;
+  --dusk-2: #ffe0c8;
+  --line: rgba(74, 34, 32, 0.18);
+  --serif: "DM Serif Display", Georgia, serif;
+  background: linear-gradient(180deg, #fff1e6 0%, #ffd2b4 38%, #ffab7e 72%, #ff8f55 100%);
+  background-attachment: fixed;
+  color: #4a2220;
+}
+body[data-room="final"] #sky { display: none; }
+body[data-room="final"] .page { position: relative; z-index: 1; max-width: 540px; text-align: center; padding-bottom: 12vh; }
+body[data-room="final"] .back { color: rgba(74, 34, 32, 0.75); font-weight: 600; }
+body[data-room="final"] .btn { background: #4a2220; color: #fff1e4; }
+body[data-room="final"] .btn:hover { background: #351614; }
+body[data-room="final"] .btn-quiet { background: transparent; color: #4a2220; box-shadow: inset 0 0 0 1.5px rgba(74, 34, 32, 0.4); }
+body[data-room="final"] :focus-visible { outline-color: #4a2220; }
+body[data-room="final"] .toast { background: #4a2220; color: #fff1e4; }
+body[data-room="final"] .countdown { color: #b4541c; }
+
+/* the sun rises from the bottom edge and keeps glowing */
+.fn-sun {
+  position: fixed; left: 50%; bottom: 0; z-index: 0; width: 150vmin; height: 150vmin; margin-left: -75vmin; pointer-events: none;
+  border-radius: 50%; transform: translateY(78%);
+  background: radial-gradient(circle, #fff6c2 0%, #ffd86b 22%, rgba(255, 168, 70, 0.75) 44%, rgba(255, 120, 60, 0) 68%);
+  animation: fn-rise 6.5s cubic-bezier(0.2, 0.7, 0.2, 1) forwards, fn-glow 5s ease-in-out 6.5s infinite;
+}
+@keyframes fn-rise { to { transform: translateY(52%); } }
+@keyframes fn-glow { 0%, 100% { transform: translateY(52%) scale(1); } 50% { transform: translateY(52%) scale(1.04); } }
+
+.fn-eyebrow { margin: 14vh 0 10px; font: 600 0.78rem/1 "Instrument Sans", sans-serif; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(74, 34, 32, 0.7); }
+.fn-title { margin: 0 0 6vh; font: 400 clamp(2.4rem, 11vw, 3.6rem)/1.08 "DM Serif Display", Georgia, serif; font-style: italic; color: #4a2220; }
+body[data-room="final"] #room .fn-line {
+  margin: 0 auto 22px; max-width: 28em; font: 400 1.25rem/1.7 "Instrument Sans", sans-serif; color: #4a2220;
+  opacity: 0; transform: translateY(12px); animation: fn-up 1.4s ease forwards;
+}
+@keyframes fn-up { to { opacity: 1; transform: none; } }
+
+/* her favourite photo, as a polaroid */
+.fn-polaroid { margin: 8vh auto 0; width: min(78%, 320px); padding: 12px 12px 8px; background: #fffaf3; transform: rotate(-2.5deg); box-shadow: 0 22px 36px -14px rgba(90, 30, 10, 0.55); }
+.fn-polaroid img { display: block; width: 100%; max-height: 62vh; object-fit: cover; background: #e9d9c8; }
+.fn-polaroid figcaption { margin-top: 10px; font: 600 1.5rem/1.1 "Caveat", cursive; color: #4a2220; }
+
+/* the wish */
+.fn-wish { margin: 12vh 0 0; }
+.fn-wish h2, .fn-recap h2 { margin: 0 0 18px; font: 400 1.6rem/1.2 "DM Serif Display", serif; font-style: italic; color: #4a2220; }
+.fn-candle { all: unset; position: relative; display: block; width: 70px; height: 130px; margin: 0 auto; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fn-candle:focus-visible { outline: 3px solid #4a2220; outline-offset: 6px; }
+.fn-wax { position: absolute; bottom: 0; left: 50%; width: 32px; height: 86px; margin-left: -16px; border-radius: 7px 7px 4px 4px; background: linear-gradient(90deg, #fff8ee, #ffe6cd 60%, #f3c8a0); box-shadow: 0 12px 22px -8px rgba(110, 40, 20, 0.55); }
+.fn-wick { position: absolute; bottom: 86px; left: 50%; width: 3px; height: 12px; margin-left: -1.5px; border-radius: 2px; background: #4a2220; }
+.fn-flame {
+  position: absolute; bottom: 96px; left: 50%; width: 20px; height: 36px; margin-left: -10px; transform-origin: 50% 100%;
+  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; background: radial-gradient(ellipse at 50% 72%, #fffbe0 0%, #ffd23f 45%, #ff8a3d 100%);
+  box-shadow: 0 0 34px 14px rgba(255, 170, 60, 0.6); animation: fn-flick 1.3s ease-in-out infinite; transition: opacity 0.5s, transform 0.5s;
+}
+@keyframes fn-flick { 0%, 100% { transform: scale(1) rotate(-2deg); } 50% { transform: scale(1.07, 0.93) rotate(3deg); } }
+.fn-candle.is-out .fn-flame { opacity: 0; transform: scale(0.15); animation: none; }
+.fn-candle.is-out .fn-wick::after {       /* a little curl of smoke */
+  content: ""; position: absolute; left: -3px; bottom: 10px; width: 9px; height: 9px; border-radius: 50%; background: rgba(74, 34, 32, 0.28); animation: fn-smoke 2.2s ease-out forwards;
+}
+@keyframes fn-smoke { from { transform: translateY(0) scale(0.6); opacity: 0.7; } to { transform: translateY(-54px) scale(2.4); opacity: 0; } }
+.fn-wish-msg { margin: 16px 0 0; min-height: 1.5em; font: 600 0.95rem/1.4 "Instrument Sans", sans-serif; color: rgba(74, 34, 32, 0.75); }
+.fn-wish-msg.is-done { font: 600 1.6rem/1.2 "Caveat", cursive; color: #4a2220; }
+
+/* recap card */
+.fn-recap { margin: 12vh auto 0; max-width: 360px; padding: 22px 22px 14px; border-radius: 20px; background: rgba(255, 250, 243, 0.55); box-shadow: inset 0 0 0 1.5px rgba(74, 34, 32, 0.2); }
+.fn-row { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-top: 1px solid rgba(74, 34, 32, 0.16); font: 500 1rem/1.3 "Instrument Sans", sans-serif; }
+.fn-row:first-of-type { border-top: 0; }
+.fn-v { font-weight: 700; }
+
+.fn-noreply { margin: 10vh auto 0; max-width: 26em; font: 600 1rem/1.5 "Instrument Sans", sans-serif; color: rgba(74, 34, 32, 0.78); }
+.fn-sign { margin: 10px 0 0; font: 600 2rem/1.2 "Caveat", cursive; color: #4a2220; }
+
+.fn-confetti { position: fixed; inset: 0; z-index: 50; pointer-events: none; overflow: hidden; }
+.fn-confetti span { position: absolute; top: -14px; width: 9px; height: 15px; border-radius: 2px; animation: fn-fall linear forwards; }
+@keyframes fn-fall { to { transform: translateY(105vh) rotate(720deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fn-sun { animation: none; transform: translateY(52%); }
+  .fn-flame { animation: none; }
+  body[data-room="final"] #room .fn-line { animation: none; opacity: 1; transform: none; }
+}
