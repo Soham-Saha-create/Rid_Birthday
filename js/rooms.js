@@ -757,8 +757,89 @@
       return;
     }
 
-    root.appendChild(h('h1', { text: F.title }));
-    paras(F.lines).forEach(function (p) { root.appendChild(p); });
+    // ---- the sunrise page: message, her favourite photo, a wish, a recap of her run ----
+    var D = Object.assign({
+      eyebrow: 'for Rid',
+      photoLabel: 'Your favourite',
+      wishTitle: 'Make a wish',
+      wishHint: 'Tap the candle when you are ready.',
+      wishDone: 'Wish made. It stays with you.',
+      recapTitle: 'Your run',
+      recapLetters: 'Letters read',
+      recapSongs: 'Songs played',
+      recapPhotos: 'Photos you loved',
+      recapQuest: 'The Hot Seat',
+      questPerfect: 'Flawless',
+      questCleared: 'Cleared',
+      noReply: 'No reply needed. This is just for you.',
+      signoff: 'from Soham'
+    }, F);
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function extra(k) { return S.extra ? S.extra(k) : undefined; }
+    function padN(n) { var g = C.gallery || {}, str = String(n); while (str.length < (g.pad || 3)) str = '0' + str; return str; }
+
+    root.appendChild(h('div', { class: 'fn-sun', 'aria-hidden': 'true' }));
+    root.appendChild(h('p', { class: 'fn-eyebrow', text: D.eyebrow }));
+    root.appendChild(h('h1', { class: 'fn-title', text: F.title }));
+    paras(F.lines, 'fn-line').forEach(function (p, i) { p.style.animationDelay = (0.9 + i * 0.9) + 's'; root.appendChild(p); });
+
+    // her favourite photo from the gallery
+    var fav = extra('gallFav');
+    if (typeof fav === 'number' && C.gallery) {
+      var pol = h('figure', { class: 'fn-polaroid' }, [
+        h('img', { src: C.gallery.folder + padN(fav) + '.' + C.gallery.ext, alt: D.photoLabel }),
+        h('figcaption', { text: D.photoLabel })
+      ]);
+      pol.querySelector('img').addEventListener('error', function () { if (pol.parentNode) pol.parentNode.removeChild(pol); });
+      root.appendChild(pol);
+    }
+
+    // a wish: tap the candle to blow it out. Nothing is saved or sent anywhere.
+    var wishMsg = h('p', { class: 'fn-wish-msg', text: D.wishHint, 'aria-live': 'polite' });
+    var candle = h('button', { class: 'fn-candle', type: 'button', 'aria-label': D.wishTitle }, [
+      h('span', { class: 'fn-flame' }), h('span', { class: 'fn-wick' }), h('span', { class: 'fn-wax' })
+    ]);
+    candle.addEventListener('click', function () {
+      if (candle.classList.contains('is-out')) return;
+      candle.classList.add('is-out');
+      wishMsg.textContent = D.wishDone;
+      wishMsg.classList.add('is-done');
+      if (reduce) return;
+      var box = h('div', { class: 'fn-confetti', 'aria-hidden': 'true' });
+      var cols = ['#ffd23f', '#ff7a59', '#ffffff', '#ff9ec0', '#ffb36b'];
+      for (var k = 0; k < 46; k++) {
+        var sp = h('span');
+        sp.style.left = Math.random() * 100 + '%';
+        sp.style.background = cols[k % cols.length];
+        sp.style.animationDelay = (Math.random() * 0.7) + 's';
+        sp.style.animationDuration = (2.2 + Math.random() * 1.8) + 's';
+        box.appendChild(sp);
+      }
+      document.body.appendChild(box);
+      setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); }, 5200);
+    });
+    root.appendChild(h('section', { class: 'fn-wish' }, [h('h2', { text: D.wishTitle }), candle, wishMsg]));
+
+    // a game-ending style recap of her run
+    var musicTotal = 0;
+    (C.music && C.music.sides || []).forEach(function (sd) { musicTotal += sd.tracks.length; });
+    var lettersTotal = (C.letters && C.letters.items || []).length;
+    var wrongs = extra('wrongs');
+    var hearted = extra('gallHearts');
+    var rows = [
+      [D.recapLetters, S.seen('letters').length + ' / ' + lettersTotal],
+      [D.recapSongs, S.seen('music').length + ' / ' + musicTotal],
+      [D.recapPhotos, String(Array.isArray(hearted) ? hearted.length : 0)]
+    ];
+    if (S.isDone('quest')) rows.push([D.recapQuest, wrongs === 0 ? D.questPerfect : D.questCleared]);
+    var recap = h('section', { class: 'fn-recap' }, [h('h2', { text: D.recapTitle })]);
+    rows.forEach(function (r) {
+      recap.appendChild(h('div', { class: 'fn-row' }, [h('span', { class: 'fn-k', text: r[0] }), h('span', { class: 'fn-v', text: r[1] })]));
+    });
+    root.appendChild(recap);
+
+    root.appendChild(h('p', { class: 'fn-noreply', text: D.noReply }));
+    if (D.signoff) root.appendChild(h('p', { class: 'fn-sign', text: D.signoff }));
     finish(false);
 
     // The easter egg: a barely-there star in the corner that opens the secret page.
