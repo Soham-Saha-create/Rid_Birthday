@@ -537,48 +537,157 @@
     });
   };
 
-  /* ---------- Gallery: scroll all the way down ---------- */
+  /* ---------- Gallery: a museum. Wings of photos, a placard for each, and she picks a favourite ---------- */
   R.gallery = function () {
-    var G = C.gallery, count = G.count | 0;
+    // Anything missing from content.js falls back to these.
+    var G = Object.assign({
+      perWing: 10, defaultMedium: 'Photograph', untitled: 'Untitled No. {n}',
+      wingWord: 'Wing', heartLabel: 'Favourite', heartedLabel: 'Hearted',
+      finale: {
+        label: 'The last room',
+        title: 'Pick your favourite',
+        text: 'Of everything on these walls, which one is yours? Tap it.',
+        none: 'You have not hearted anything yet. Scroll back up and heart a few, then come back here.',
+        done: 'Locked in. Good taste.',
+        pickedLabel: 'Your pick'
+      }
+    }, C.gallery);
+    G.finale = Object.assign({}, { label: 'The last room', title: 'Pick your favourite', text: 'Of everything on these walls, which one is yours? Tap it.', none: 'You have not hearted anything yet. Scroll back up and heart a few, then come back here.', done: 'Locked in. Good taste.', pickedLabel: 'Your pick' }, C.gallery && C.gallery.finale);
+    var count = G.count | 0, per = Math.max(1, G.perWing | 0);
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     head(G.title, G.intro);
-    var feed = h('ol', { class: 'feed' });
-    root.appendChild(feed);
 
     function pad(n) { var s = String(n); while (s.length < (G.pad || 3)) s = '0' + s; return s; }
+    function srcOf(n) { return G.folder + pad(n) + '.' + G.ext; }
+    function store(k, v) {
+      if (!S.extra) return v === undefined ? null : v;
+      return v === undefined ? S.extra(k) : S.extra(k, v);
+    }
+    var hearted = store('gallHearts'); if (!Array.isArray(hearted)) hearted = [];
+    var fav = store('gallFav'); if (typeof fav !== 'number') fav = null;
+    function saveHearts() { store('gallHearts', hearted.slice()); }
+
+    var feed = h('div', { class: 'gl-feed' });
+    root.appendChild(feed);
+    var frames = [];
+
+    function wingOf(n) { return Math.floor((n - 1) / per); }
+    function wingTitle(w) {
+      var cfg = (G.wings && G.wings[w]) || {};
+      return cfg;
+    }
 
     for (var i = 1; i <= count; i++) {
       (function (n) {
-        var caption = (G.captions && G.captions[n]) || '';
-        var wrap = h('div', { class: 'shot is-loading' });
-        var img = h('img', {
-          src: G.folder + pad(n) + '.' + G.ext, alt: caption || ('Photo ' + n),
-          loading: 'lazy', decoding: 'async'
-        });
+        var w = wingOf(n);
+        if ((n - 1) % per === 0) {
+          var cfg = wingTitle(w);
+          feed.appendChild(h('section', { class: 'gl-wing', 'data-wing': w + 1 }, [
+            h('p', { class: 'gl-wing-no', text: G.wingWord + ' ' + (w + 1) }),
+            h('h2', { class: 'gl-wing-title', text: cfg.title || '' }),
+            cfg.sub ? h('p', { class: 'gl-wing-sub', text: cfg.sub }) : null
+          ]));
+        }
+        var cap = G.captions && G.captions[n];
+        var t, m = G.defaultMedium, note = '';
+        if (cap && typeof cap === 'object') { t = cap.t || ''; m = cap.m || m; note = cap.n || ''; }
+        else { t = cap || ''; }
+        if (!t) t = G.untitled.replace('{n}', n);
+
+        var wrap = h('div', { class: 'gl-shot is-loading' });
+        var img = h('img', { src: srcOf(n), alt: t, loading: 'lazy', decoding: 'async' });
         img.addEventListener('load', function () { wrap.classList.remove('is-loading'); });
         img.addEventListener('error', function () {
-          wrap.classList.remove('is-loading');
-          wrap.classList.add('is-missing');
+          wrap.classList.remove('is-loading'); wrap.classList.add('is-missing');
           wrap.textContent = G.missing.replace('{n}', pad(n));
         });
         wrap.appendChild(img);
-        feed.appendChild(h('li', { class: 'frame', 'data-i': n }, [wrap, caption ? h('p', { class: 'cap', text: caption }) : null]));
+
+        var heart = h('button', { class: 'gl-heart', type: 'button', 'aria-pressed': 'false', 'aria-label': G.heartLabel + ': ' + t }, [
+          h('span', { class: 'gl-heart-i', text: '\u2665' }), h('span', { class: 'gl-heart-t', text: G.heartLabel })
+        ]);
+        function paintHeart() {
+          var on = hearted.indexOf(n) >= 0;
+          heart.setAttribute('aria-pressed', on ? 'true' : 'false');
+          heart.querySelector('.gl-heart-t').textContent = on ? G.heartedLabel : G.heartLabel;
+        }
+        paintHeart();
+        heart.addEventListener('click', function () {
+          var k = hearted.indexOf(n);
+          if (k >= 0) hearted.splice(k, 1); else hearted.push(n);
+          saveHearts(); paintHeart();
+        });
+
+        var plaque = h('figcaption', { class: 'gl-plaque' }, [
+          h('p', { class: 'gl-t', text: t }),
+          h('p', { class: 'gl-m', text: m }),
+          note ? h('p', { class: 'gl-n', text: note }) : null,
+          heart
+        ]);
+        var fig = h('figure', { class: 'gl-frame', 'data-i': n, 'data-wing': w + 1 }, [h('div', { class: 'gl-mat' }, [wrap]), plaque]);
+        frames.push(fig);
+        feed.appendChild(fig);
       })(i);
     }
 
-    var counter = h('p', { class: 'counter', 'aria-hidden': 'true', text: '1 / ' + count });
-    document.body.appendChild(counter);
-    var end = h('div', { class: 'feed-end' });
-    root.appendChild(end);
+    // ---- the last room: pick a favourite ----
+    var F = G.finale;
+    var picker = h('div', { class: 'gl-pick-grid' });
+    var pickMsg = h('p', { class: 'gl-pick-msg' });
+    var finale = h('section', { class: 'gl-finale' }, [
+      h('p', { class: 'gl-wing-no', text: F.label }),
+      h('h2', { class: 'gl-wing-title', text: F.title }),
+      h('p', { class: 'gl-wing-sub', text: F.text }),
+      picker, pickMsg
+    ]);
+    root.appendChild(finale);
+    function renderPicker() {
+      picker.textContent = '';
+      var list = hearted.slice().sort(function (a, b) { return a - b; });
+      if (fav !== null && list.indexOf(fav) < 0) list.push(fav);
+      if (!list.length) { pickMsg.textContent = F.none; return; }
+      pickMsg.textContent = fav !== null ? F.done : '';
+      list.forEach(function (n) {
+        var b = h('button', { class: 'gl-pick' + (n === fav ? ' is-fav' : ''), type: 'button', 'aria-pressed': n === fav ? 'true' : 'false', 'aria-label': 'Photo ' + n }, [
+          h('img', { src: srcOf(n), alt: '' }),
+          n === fav ? h('span', { class: 'gl-pick-tag', text: F.pickedLabel }) : null
+        ]);
+        b.addEventListener('click', function () {
+          fav = n; store('gallFav', n);
+          renderPicker();
+          finish();
+        });
+        picker.appendChild(b);
+      });
+    }
+    renderPicker();
+    if (fav !== null) finish(false);
 
+    // ---- the floating counter ----
+    var counter = h('p', { class: 'gl-counter', 'aria-hidden': 'true', text: '1 / ' + count });
+    document.body.appendChild(counter);
+
+    // ---- photos "develop" as they come into view; counter follows along ----
     if ('IntersectionObserver' in window) {
+      var dev = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('is-developed'); dev.unobserve(e.target); }
+        });
+      }, { threshold: 0.3 });
       var cur = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) {
-          if (e.isIntersecting) counter.textContent = e.target.getAttribute('data-i') + ' / ' + count;
+          if (e.isIntersecting) counter.textContent = e.target.getAttribute('data-i') + ' / ' + count + '  \u00b7  ' + G.wingWord + ' ' + e.target.getAttribute('data-wing');
         });
       }, { rootMargin: '-45% 0px -45% 0px' });
-      Array.prototype.forEach.call(feed.querySelectorAll('.frame'), function (f) { cur.observe(f); });
+      frames.forEach(function (f) { if (reduce) f.classList.add('is-developed'); else dev.observe(f); cur.observe(f); });
+      var shown = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) renderPicker(); });
+        counter.classList.toggle('is-hidden', entries.some(function (e) { return e.isIntersecting; }));
+      }, { threshold: 0.05 });
+      shown.observe(finale);
+    } else {
+      frames.forEach(function (f) { f.classList.add('is-developed'); });
     }
-    whenReached(end, function () { finish(); });
   };
 
   /* ---------- Words: nothing fancy, just the page ---------- */
