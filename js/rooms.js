@@ -159,68 +159,222 @@
     }
   };
 
-  /* ---------- Quest: trivia, each right answer opens a hidden message ---------- */
+  /* ---------- Quest: a game show with lifelines and sound effects ---------- */
   R.quest = function () {
-    var Q = C.quest, qs = Q.questions;
+    var Q = C.quest, qs = Q.questions, LET = ['A', 'B', 'C', 'D'];
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     head(Q.title, Q.intro);
-    var stage = h('div', { class: 'stage' });
-    var rewards = h('section', { class: 'rewards', hidden: true });
-    root.appendChild(stage);
+
+    // ---- sound effects, made in the browser (no audio files needed) ----
+    var AC = null, muted = false;
+    try { muted = localStorage.getItem('ridQuestMuted') === '1'; } catch (e) {}
+    function ctx() {
+      if (!AC) { var A = window.AudioContext || window.webkitAudioContext; if (A) AC = new A(); }
+      if (AC && AC.state === 'suspended') AC.resume();
+      return AC;
+    }
+    function tone(freq, t0, dur, type, vol, slideTo) {
+      var c = ctx(); if (!c || muted) return;
+      var now = c.currentTime + t0, o = c.createOscillator(), g = c.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(freq, now);
+      if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, now + dur);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(vol || 0.2, now + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      o.connect(g); g.connect(c.destination);
+      o.start(now); o.stop(now + dur + 0.05);
+    }
+    var sfx = {
+      pick:  function () { tone(520, 0, 0.08, 'triangle', 0.12); },
+      right: function () { [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) { tone(f, i * 0.09, 0.3, 'triangle', 0.2); tone(f * 2, i * 0.09, 0.18, 'sine', 0.05); }); },
+      wrong: function () { tone(150, 0, 0.55, 'sawtooth', 0.22, 90); tone(158, 0, 0.55, 'square', 0.1, 95); },
+      life:  function () { tone(400, 0, 0.12, 'sine', 0.15, 800); tone(800, 0.12, 0.16, 'sine', 0.12, 1250); },
+      win:   function () { [523.25, 523.25, 523.25, 659.25, 783.99, 659.25, 783.99, 1046.5].forEach(function (f, i) { tone(f, i * 0.14, 0.3, 'square', 0.1); }); }
+    };
+    function pick(list) { return Array.isArray(list) ? list[Math.floor(Math.random() * list.length)] : list; }
+
+    // ---- the set ----
+    var ladder = h('div', { class: 'gs-ladder', 'aria-label': 'Progress' });
+    qs.forEach(function (_, i) { ladder.appendChild(h('span', { class: 'gs-step', text: String(i + 1) })); });
+    var mute = h('button', { class: 'gs-mute', type: 'button' });
+    function paintMute() { mute.textContent = muted ? Q.soundOff : Q.soundOn; mute.setAttribute('aria-pressed', muted ? 'true' : 'false'); }
+    mute.addEventListener('click', function () {
+      muted = !muted; paintMute();
+      try { localStorage.setItem('ridQuestMuted', muted ? '1' : '0'); } catch (e) {}
+      if (!muted) sfx.pick();
+    });
+    paintMute();
+    root.appendChild(h('div', { class: 'gs-top' }, [ladder, mute]));
+
+    var bubbleText = h('span', { class: 'gs-say', 'aria-live': 'polite' });
+    var bubble = h('div', { class: 'gs-bubble' }, [bubbleText]);
+    root.appendChild(h('div', { class: 'gs-host' }, [
+      h('div', { class: 'gs-avatar', 'aria-hidden': 'true', text: (Q.host || 'S').charAt(0) }),
+      bubble
+    ]));
+    function say(t) {
+      bubbleText.textContent = t;
+      bubble.classList.remove('pop'); void bubble.offsetWidth; bubble.classList.add('pop');
+    }
+
+    var used = { fifty: false, phone: false, audience: false };
+    var lifeBtns = {};
+    var lifeRow = h('div', { class: 'gs-lifelines' });
+    [['fifty', Q.fifty], ['phone', Q.phone], ['audience', Q.audience]].forEach(function (l) {
+      var b = h('button', { class: 'gs-life', type: 'button', text: l[1] });
+      lifeBtns[l[0]] = b; lifeRow.appendChild(b);
+    });
+    root.appendChild(lifeRow);
+
+    var panel = h('div', { class: 'gs-panel' });
+    var rewards = h('section', { class: 'gs-rewards', hidden: true });
+    root.appendChild(panel);
     root.appendChild(rewards);
 
+    function setLadder(i) {
+      Array.prototype.forEach.call(ladder.children, function (el, k) {
+        el.classList.toggle('is-done', k < i);
+        el.classList.toggle('is-now', k === i);
+      });
+    }
     function renderRewards() {
       var n = S.seen('quest').length;
       rewards.textContent = '';
       if (!n) { rewards.hidden = true; return; }
       rewards.hidden = false;
       rewards.appendChild(h('h2', { text: Q.collectedTitle }));
-      for (var i = 0; i < n && i < qs.length; i++) rewards.appendChild(h('p', { class: 'reward', text: qs[i].reward }));
+      for (var i = 0; i < n && i < qs.length; i++) rewards.appendChild(h('p', { class: 'gs-reward-line', text: qs[i].reward }));
+    }
+    function confetti() {
+      if (reduce) return;
+      var box = h('div', { class: 'gs-confetti', 'aria-hidden': 'true' });
+      var cols = ['#ffd23f', '#ffffff', '#ff7aa8', '#4dd6ff', '#2fd07a'];
+      for (var k = 0; k < 40; k++) {
+        var s = h('span');
+        s.style.left = Math.random() * 100 + '%';
+        s.style.background = cols[k % cols.length];
+        s.style.animationDelay = (Math.random() * 0.8) + 's';
+        s.style.animationDuration = (2 + Math.random() * 1.8) + 's';
+        box.appendChild(s);
+      }
+      document.body.appendChild(box);
+      setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); }, 5200);
     }
 
-    function show(i) {
-      stage.textContent = '';
+    // ---- one question ----
+    function show(i, fresh) {
+      panel.textContent = '';
+      setLadder(i);
       if (i >= qs.length) {
-        stage.appendChild(h('p', { class: 'lede', text: Q.doneLine }));
+        lifeRow.hidden = true;
+        panel.appendChild(h('div', { class: 'gs-qbox' }, [h('p', { class: 'gs-q', text: Q.doneLine })]));
+        say(Q.hostFinal);
         renderRewards();
+        if (fresh) { sfx.win(); confetti(); }
         finish();
         return;
       }
-      var q = qs[i], wrong = 0;
-      var msg = h('p', { class: 'quest-msg', 'aria-live': 'polite' });
-      var opts = h('div', { class: 'options' });
-      stage.appendChild(h('p', { class: 'quest-count', text: 'Question ' + (i + 1) + ' of ' + qs.length }));
-      stage.appendChild(h('h2', { class: 'question', text: q.q }));
-      stage.appendChild(opts);
-      stage.appendChild(msg);
+      lifeRow.hidden = false;
+      var q = qs[i], wrong = 0, locked = false, gone = {}, optBtns = [];
+      say(i === 0 && !S.seen('quest').length ? Q.hostIntro : pick(Q.hostNext));
+
+      var extra = h('div', { class: 'gs-extra' });
+      var msg = h('p', { class: 'gs-msg' });
+      var opts = h('div', { class: 'gs-options' });
+      panel.appendChild(h('p', { class: 'gs-count', text: 'Question ' + (i + 1) + ' of ' + qs.length }));
+      panel.appendChild(h('div', { class: 'gs-qbox' }, [h('h2', { class: 'gs-q', text: q.q })]));
+      panel.appendChild(opts);
+      panel.appendChild(extra);
+      panel.appendChild(msg);
+
+      function refreshLife() {
+        Object.keys(lifeBtns).forEach(function (k) {
+          lifeBtns[k].disabled = used[k] || locked;
+          lifeBtns[k].classList.toggle('is-used', used[k]);
+          lifeBtns[k].setAttribute('aria-label', lifeBtns[k].textContent + (used[k] ? ' (' + Q.usedLabel + ')' : ''));
+        });
+      }
+      refreshLife();
+
+      function visible() { return optBtns.map(function (_, k) { return k; }).filter(function (k) { return !gone[k]; }); }
+      lifeBtns.fifty.onclick = function () {
+        if (used.fifty || locked) return;
+        used.fifty = true; sfx.life(); say(Q.fiftyLine);
+        var wrongOnes = visible().filter(function (k) { return k !== q.answer && !optBtns[k].disabled; });
+        wrongOnes.sort(function () { return Math.random() - 0.5; });
+        wrongOnes.slice(0, 2).forEach(function (k) { gone[k] = true; optBtns[k].classList.add('is-gone'); optBtns[k].disabled = true; });
+        refreshLife();
+      };
+      lifeBtns.phone.onclick = function () {
+        if (used.phone || locked) return;
+        used.phone = true; sfx.life(); say(Q.hostLifeline);
+        var txt = q.phone || Q.phoneLine.replace('{a}', LET[q.answer] + ' (' + q.options[q.answer] + ')');
+        extra.textContent = '';
+        extra.appendChild(h('div', { class: 'gs-info' }, [h('p', { class: 'gs-info-title', text: Q.host + ':' }), h('p', { text: txt })]));
+        refreshLife();
+      };
+      lifeBtns.audience.onclick = function () {
+        if (used.audience || locked) return;
+        used.audience = true; sfx.life(); say(Q.hostLifeline);
+        var vis = visible(), pct = {}, right = 45 + Math.floor(Math.random() * 25), left = 100 - right;
+        var others = vis.filter(function (k) { return k !== q.answer; });
+        pct[q.answer] = right;
+        others.forEach(function (k, n) {
+          var share = n === others.length - 1 ? left : Math.floor(Math.random() * (left + 1));
+          pct[k] = share; left -= share;
+        });
+        extra.textContent = '';
+        var box = h('div', { class: 'gs-info' }, [h('p', { class: 'gs-info-title', text: Q.audienceTitle })]);
+        optBtns.forEach(function (_, k) {
+          var v = gone[k] ? 0 : (pct[k] || 0);
+          var fill = h('span', { class: 'gs-bar-fill' });
+          box.appendChild(h('div', { class: 'gs-bar' }, [
+            h('span', { class: 'gs-bar-l', text: LET[k] }),
+            h('span', { class: 'gs-bar-track' }, [fill]),
+            h('span', { class: 'gs-bar-v', text: v + '%' })
+          ]));
+          setTimeout(function () { fill.style.width = v + '%'; }, 60);
+        });
+        extra.appendChild(box);
+        refreshLife();
+      };
 
       q.options.forEach(function (label, k) {
-        var b = h('button', { class: 'option', type: 'button', text: label });
+        var b = h('button', { class: 'gs-option', type: 'button' }, [
+          h('span', { class: 'gs-letter', text: LET[k] + ':' }), h('span', { class: 'gs-opt-text', text: label })
+        ]);
+        optBtns.push(b);
         b.addEventListener('click', function () {
+          if (locked) return;
           if (k === q.answer) {
-            b.classList.add('is-right');
+            locked = true;
+            b.classList.add('is-right'); sfx.right(); say(pick(Q.hostRight));
             S.mark('quest', i);
-            Array.prototype.forEach.call(opts.querySelectorAll('button'), function (x) { x.disabled = true; });
-            msg.textContent = '';
-            stage.appendChild(h('div', { class: 'unlock' }, [
-              h('p', { class: 'unlock-label', text: Q.unlockLabel }),
-              h('p', { text: q.reward })
+            optBtns.forEach(function (x) { x.disabled = true; });
+            refreshLife(); extra.textContent = ''; msg.textContent = '';
+            setLadder(i + 1);
+            panel.appendChild(h('div', { class: 'gs-reward' }, [
+              h('p', { class: 'gs-reward-label', text: Q.unlockLabel }),
+              h('p', { class: 'gs-reward-text', text: q.reward })
             ]));
-            var next = h('button', { class: 'btn', type: 'button', text: i + 1 < qs.length ? Q.next : Q.finish });
-            next.addEventListener('click', function () { show(i + 1); });
-            stage.appendChild(next);
+            var next = h('button', { class: 'btn gs-next', type: 'button', text: i + 1 < qs.length ? Q.next : Q.finish });
+            next.addEventListener('click', function () { sfx.pick(); show(i + 1, true); });
+            panel.appendChild(next);
             renderRewards();
             next.focus();
           } else {
             wrong += 1;
-            b.disabled = true;
-            b.classList.add('is-wrong');
-            msg.textContent = (wrong >= 2 && q.hint) ? Q.hintPrefix + q.hint : Q.tryAgain;
+            b.disabled = true; b.classList.add('is-wrong');
+            sfx.wrong(); say(pick(Q.hostWrong));
+            panel.classList.remove('gs-shake'); void panel.offsetWidth; panel.classList.add('gs-shake');
+            msg.textContent = (wrong >= 2 && q.hint) ? Q.hintPrefix + q.hint : '';
           }
         });
         opts.appendChild(b);
       });
     }
-    show(Math.min(S.seen('quest').length, qs.length));
+    show(Math.min(S.seen('quest').length, qs.length), false);
   };
 
   /* ---------- Letters: open all seven. Each letter is typed out, with a skip button ---------- */

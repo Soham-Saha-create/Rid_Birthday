@@ -86,24 +86,43 @@ window.CONTENT = {
     closing: { mark: "\u2014", text: "TODO: a short closing note. Keep it light.", sign: "for Rid" }
   },
 
-  /* ---------- Quest (trivia) ---------- */
+  /* ---------- Quest: a game show. Each right answer opens a hidden message ---------- */
   quest: {
-    title: "The quest",
-    intro: "Answer each question to open a hidden message. Wrong answers cost nothing.",
-    tryAgain: "Not that one. Try another.",
+    title: "The Hot Seat",
+    intro: "Five questions. Three lifelines. Wrong answers cost nothing, I promise.",
+    host: "Soham",
+    // Lines the host says. Lists give a random pick each time.
+    hostIntro: "Welcome to the hot seat. Take a breath, this one is on me.",
+    hostNext: ["Next one. You have got this.", "Alright, here comes another.", "Okay, no pressure, but this one is tricky."],
+    hostRight: ["Correct! Look at you go.", "Yes! Smart cookie.", "Right answer. I am impressed."],
+    hostWrong: ["Ooh, not that one.", "The buzzer says no. Try another.", "So close. Well, not really. Try again."],
+    hostLifeline: "Lifeline locked in.",
+    hostFinal: "That was all of them. You just beat the game.",
     hintPrefix: "A hint: ",
+    // lifelines
+    fifty: "50:50",
+    phone: "Ask Soham",
+    audience: "Poll",
+    usedLabel: "used",
+    fiftyLine: "Two wrong answers, gone.",
+    phoneLine: "Hmm, my gut says it is {a}. Do not blame me if I am wrong.",   // {a} becomes the letter and answer
+    audienceTitle: "The audience says",
+    // the rest
+    soundOn: "Sound on",
+    soundOff: "Sound off",
     unlockLabel: "A hidden message opened",
     next: "Next question",
     finish: "See what you found",
     collectedTitle: "What you opened",
     doneLine: "That was all of them.",
-    // answer = position of the right option, counting from 0 (0 is the first option)
+    // answer = position of the right option, counting from 0 (0 is A, 1 is B, 2 is C, 3 is D)
+    // Optional per question: phone: "what Soham says if she asks him", hint: "shown after 2 wrong tries"
     questions: [
-      { q: "TODO: question 1", options: ["TODO: right answer", "TODO: wrong answer", "TODO: wrong answer"], answer: 0, hint: "", reward: "TODO: hidden message 1" },
-      { q: "TODO: question 2", options: ["TODO: wrong answer", "TODO: right answer", "TODO: wrong answer"], answer: 1, hint: "", reward: "TODO: hidden message 2" },
-      { q: "TODO: question 3", options: ["TODO: wrong answer", "TODO: wrong answer", "TODO: right answer"], answer: 2, hint: "", reward: "TODO: hidden message 3" },
-      { q: "TODO: question 4", options: ["TODO: right answer", "TODO: wrong answer", "TODO: wrong answer"], answer: 0, hint: "", reward: "TODO: hidden message 4" },
-      { q: "TODO: question 5", options: ["TODO: wrong answer", "TODO: right answer", "TODO: wrong answer"], answer: 1, hint: "", reward: "TODO: hidden message 5" }
+      { q: "TODO: question 1", options: ["TODO: right answer", "TODO: wrong answer", "TODO: wrong answer", "TODO: wrong answer"], answer: 0, hint: "", reward: "TODO: hidden message 1" },
+      { q: "TODO: question 2", options: ["TODO: wrong answer", "TODO: right answer", "TODO: wrong answer", "TODO: wrong answer"], answer: 1, hint: "", reward: "TODO: hidden message 2" },
+      { q: "TODO: question 3", options: ["TODO: wrong answer", "TODO: wrong answer", "TODO: right answer", "TODO: wrong answer"], answer: 2, hint: "", reward: "TODO: hidden message 3" },
+      { q: "TODO: question 4", options: ["TODO: wrong answer", "TODO: wrong answer", "TODO: wrong answer", "TODO: right answer"], answer: 3, hint: "", reward: "TODO: hidden message 4" },
+      { q: "TODO: question 5", options: ["TODO: right answer", "TODO: wrong answer", "TODO: wrong answer", "TODO: wrong answer"], answer: 0, hint: "", reward: "TODO: hidden message 5" }
     ]
   },
 
