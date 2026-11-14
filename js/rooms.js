@@ -690,14 +690,48 @@
     }
   };
 
-  /* ---------- Words: nothing fancy, just the page ---------- */
+  /* ---------- Words: quiet on purpose. The page warms as she reads, and each line is uncovered slowly ---------- */
   R.words = function () {
     var W = C.words;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    root.appendChild(h('div', { class: 'wd-heart', 'aria-hidden': 'true', text: '\u2665' }));
     root.appendChild(h('h1', { text: W.title }));
-    paras(W.lines).forEach(function (p) { root.appendChild(p); });
-    if (W.signoff) root.appendChild(h('p', { class: 'signoff', text: W.signoff }));
+    var lines = paras(W.lines, 'wd-line');
+    lines.forEach(function (p) { root.appendChild(p); });
+    if (W.signoff) {
+      var sign = h('p', { class: 'wd-line wd-sign', text: W.signoff });
+      lines.push(sign);
+      root.appendChild(sign);
+    }
+    root.appendChild(h('div', { class: 'wd-star', 'aria-hidden': 'true', text: '\u2726' }));
     var end = h('div', { class: 'feed-end' });
     root.appendChild(end);
+
+    // each line sharpens as it reaches the middle of the screen
+    if ('IntersectionObserver' in window && !reduce) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('is-seen'); io.unobserve(e.target); }
+        });
+      }, { rootMargin: '0px 0px -22% 0px', threshold: 0.2 });
+      lines.forEach(function (p) { io.observe(p); });
+    } else {
+      lines.forEach(function (p) { p.classList.add('is-seen'); });
+    }
+
+    // the page warms from paper white to blush as she scrolls down
+    var ticking = false;
+    function warm() {
+      ticking = false;
+      var max = document.documentElement.scrollHeight - window.innerHeight;
+      var t = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 1;
+      document.body.style.setProperty('--warm', (t * t * (3 - 2 * t)).toFixed(3));
+    }
+    window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(warm); } }, { passive: true });
+    window.addEventListener('resize', warm);
+    warm();
+
     whenReached(end, function () { finish(W.toast); });
   };
 
